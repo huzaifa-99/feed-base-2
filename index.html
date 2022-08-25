@@ -64,6 +64,43 @@
         </div>
     </header>
 
+    <!-- help dialog -->
+    <div class="help-dialog" id="help-dialog">
+        <div class="help-dialog-content">
+            <p>
+                Play with 4-bit binary numbers in a fun way, these are decimal numbers from 0-15 (see <a
+                    aria-label="Link to image with decimal to binary conversions" href="./assets/images/binaryConversion.png"
+                    title="Link to image with decimal to binary conversions">binary conversions</a>)
+            </p>
+            <ul>
+                <li>
+                    A target number is displayed at the center of the header (like Find 2)
+                </li>
+                <li>
+                    Find and catch the block with a binary representation of the target number (2 is 0010)
+                </li>
+                <li>
+                    A correct catch will add 10 points to the current score
+                </li>
+                <li>
+                    Try avoiding incorrect blocks, they will decrease the score by 10 points
+                </li>
+                <li>
+                    A new target number is set after each successful catch
+                </li>
+                <li>
+                    A target number can also repeat multiple times repeatedly
+                </li>
+                <li>
+                    Use left/right arrow keys to move the player
+                </li>
+            </ul>
+            <button class="button btn-primary mx-auto" id="help-close">
+                Close
+            </button>
+        </div>
+    </div>
+
     <canvas id="game-canvas">
     </canvas>
 </body>

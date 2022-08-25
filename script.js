@@ -261,6 +261,7 @@ window.onload = function () {
     let currentTargetIndex = 0;
     let paused = true;
     let obstacles = [];
+    let helpDialogIsOpen = true;
     let maxObstacles = getMaxObstaclesCount(browserWidth);
     let touchCoordinates = null;
     let touchStartCoordinates = null;
@@ -272,6 +273,9 @@ window.onload = function () {
     const currentTargetContainer = document.getElementById("current-target");
     const playBtn = document.getElementById("play-btn");
     const pauseBtn = document.getElementById("pause-btn");
+    const helpDialog = document.getElementById("help-dialog");
+    const helpOpen = document.getElementById("help-open");
+    const helpClose = document.getElementById("help-close");
 
     // update ui
     context.font = `${FONT.large} ${FONT.family}`;
@@ -304,6 +308,16 @@ window.onload = function () {
         paused = true;
         playBtn.classList.remove("hidden");
         this.classList.add("hidden");
+    });
+    helpClose.addEventListener("click", () => {
+        paused = false;
+        helpDialogIsOpen = false;
+        helpDialog.classList.add("hidden");
+    });
+    helpOpen.addEventListener("click", () => {
+        paused = true;
+        helpDialogIsOpen = true;
+        helpDialog.classList.remove("hidden");
     });
     document.addEventListener(
         "touchstart",
@@ -345,8 +359,11 @@ window.onload = function () {
             e.preventDefault();
         }
 
+        // open help dialog
+        if (e.code === "Escape") helpOpen.click();
+
         // play/pause the game
-        if (e.code === "Space") {
+        if (e.code === "Space" && !helpDialogIsOpen) {
             paused = !paused;
             if (paused) {
                 playBtn.classList.remove("hidden");
