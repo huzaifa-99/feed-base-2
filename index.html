@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A simple javascript game to play with 4-bit BCD/binary-numbers">
+    <title>Feed Base-2</title>
+    <link rel="stylesheet" href="./style.css" />
+    <script src="./script.js"></script>
+</head>
+
+<body>
+    <!-- header -->
+    <header>
+        <div class="section-left">
+            <span>
+                Score&nbsp;
+            </span>
+            <span id="score">
+                0
+            </span>
+        </div>
+        <div class="section-center">
+            <span class="target-head">
+                Find
+            </span>
+            <span class="target-number" id="current-target">
+                0
+            </span>
+        </div>
+        <div class="section-right">
+            <button class="button" id="play-btn" title="Play">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16" height="1em"
+                    width="1em">
+                    <path d="M3 2l10 6-10 6z"></path>
+                </svg>
+            </button>
+            <button class="button" id="pause-btn" title="Pause">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 512 512" height="1em"
+                    width="1em">
+                    <path d="M96 448h106.7V64H96v384zM309.3 64v384H416V64H309.3z"></path>
+                </svg>
+            </button>
+            <button class="button" id="help-open" title="About this game">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1em"
+                    width="1em">
+                    <path fill="none" d="M0 0h24v24H0V0z"></path>
+                    <path
+                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z">
+                    </path>
+                </svg>
+            </button>
+            <a class="button" href="https://github.com/huzaifa-99" aria-label="Link to source code on github"
+                title="Link to source code on github">
+                <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16" height="1em"
+                    width="1em">
+                    <path
+                        d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.012 8.012 0 0 0 16 8c0-4.42-3.58-8-8-8z">
+                    </path>
+                </svg>
+            </a>
+        </div>
+    </header>
+
+    <canvas id="game-canvas">
+    </canvas>
+</body>
+
+</html>

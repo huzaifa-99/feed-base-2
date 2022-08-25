@@ -1,0 +1,190 @@
+/* vietnamese */
+@font-face {
+    font-family: 'Inconsolata';
+    font-style: normal;
+    font-weight: 300;
+    font-stretch: 100%;
+    font-display: swap;
+    src: url(./assets/fonts/Inconsolata-normal-vietnamese.woff2) format('woff2');
+    unicode-range: U+0102-0103, U+0110-0111, U+0128-0129, U+0168-0169, U+01A0-01A1, U+01AF-01B0, U+1EA0-1EF9, U+20AB;
+}
+
+/* latin-ext */
+@font-face {
+    font-family: 'Inconsolata';
+    font-style: normal;
+    font-weight: 300;
+    font-stretch: 100%;
+    font-display: swap;
+    src: url(./assets/fonts/Inconsolata-normal-latin-ext.woff2) format('woff2');
+    unicode-range: U+0100-024F, U+0259, U+1E00-1EFF, U+2020, U+20A0-20AB, U+20AD-20CF, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+/* latin */
+@font-face {
+    font-family: 'Inconsolata';
+    font-style: normal;
+    font-weight: 300;
+    font-stretch: 100%;
+    font-display: swap;
+    src: url(./assets/fonts/Inconsolata-normal-latin.woff2) format('woff2');
+    unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Inconsolata', monospace;
+}
+
+:root {
+    --primary: #0e8225;
+    --secondary: #1a1717;
+    --black: #000000;
+    --white: #ffffff;
+    --gray: #282b28;
+    --green-200: rgba(14, 130, 37, 0.2);
+}
+
+body {
+    background-color: var(--secondary);
+    max-height: 100vh;
+    overflow: hidden;
+    color: var(--white);
+}
+
+p {
+    font-size: 1rem;
+}
+
+a {
+    color: var(--white);
+}
+
+ul {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    max-width: 95%;
+    margin-left: auto;
+    font-size: 0.95rem;
+}
+
+ul li {
+    line-height: 1.35;
+}
+
+canvas {
+    background-color: var(--secondary);
+    cursor: not-allowed;
+    user-select: none;
+}
+
+header {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    position: fixed;
+    top: 0;
+    font-size: 1.25rem;
+    width: 100%;
+    min-height: 60px;
+    padding: 8px;
+    color: var(--white);
+    background-color: var(--primary);
+}
+
+.section-right {
+    display: flex;
+    align-items: center;
+    justify-content: right;
+}
+
+.section-left {
+    display: flex;
+    align-items: center;
+    justify-content: left;
+}
+
+.section-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+.target-head {
+    font-size: 0.9rem;
+}
+
+.target-number {
+    font-size: 1.75rem;
+    font-weight: 700;
+}
+
+.button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 0;
+    padding: 4px;
+    font-size: 1.5rem;
+    color: var(--white);
+    background-color: transparent;
+}
+
+.button:hover {
+    cursor: pointer;
+    filter: brightness(1.25);
+}
+
+.btn-primary {
+    background-color: var(--primary);
+}
+
+.btn-primary:hover {
+    filter: brightness(1.25);
+}
+
+.hidden {
+    display: none !important;
+}
+
+.mx-auto {
+    margin: auto;
+}
+
+@media (min-width: 640px) {
+    p {
+        font-size: 1.5rem;
+    }
+
+    ul {
+        font-size: 1.25rem;
+    }
+
+    ul li {
+        line-height: 1.5;
+    }
+
+    header {
+        padding: 10px;
+        font-size: 1.5rem;
+        min-height: 70px;
+    }
+
+    .target-head {
+        font-size: 1rem;
+    }
+
+    .target-number {
+        font-size: 2rem;
+        font-weight: 900;
+    }
+
+    .button {
+        padding: 4px;
+        font-size: 1.75rem;
+    }
+}
