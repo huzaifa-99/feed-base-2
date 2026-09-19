@@ -1,4 +1,13 @@
-import { HIGH_SCORE_KEY, SOUND_KEY, TOAST_MS } from "./constants.js";
+import { SOUND_KEY, TOAST_MS } from "./constants.js";
+import {
+    DIFFICULTIES,
+    DIFFICULTY_KEY,
+    CHEATS_KEY,
+    MODE_KEY,
+    PLAY_MODES,
+    highScoreKey,
+} from "./modes.js";
+import { toBinary } from "./utils.js";
 
 /** Reads DOM nodes used by the game chrome. */
 export function bindUi() {
@@ -9,7 +18,11 @@ export function bindUi() {
         highScore: document.getElementById("high-score"),
         streak: document.getElementById("streak"),
         streakRow: document.getElementById("streak-row"),
+        targetHead: document.getElementById("target-head"),
         currentTarget: document.getElementById("current-target"),
+        targetHint: document.getElementById("target-hint"),
+        modeBadge: document.getElementById("mode-badge"),
+        modeHint: document.getElementById("mode-hint"),
         playBtn: document.getElementById("play-btn"),
         pauseBtn: document.getElementById("pause-btn"),
         soundBtn,
@@ -17,11 +30,23 @@ export function bindUi() {
         helpDialog: document.getElementById("help-dialog"),
         helpOpen: document.getElementById("help-open"),
         helpClose: document.getElementById("help-close"),
+        howtoOpen: document.getElementById("howto-open"),
+        howtoBack: document.getElementById("howto-back"),
+        settingsPanel: document.getElementById("settings-panel"),
+        howtoPanel: document.getElementById("howto-panel"),
         pauseOverlay: document.getElementById("pause-overlay"),
         feedbackToast: document.getElementById("feedback-toast"),
         soundOnIcon: soundBtn.querySelector(".icon-sound-on"),
         soundOffIcon: soundBtn.querySelector(".icon-sound-off"),
         canvas: document.getElementById("game-canvas"),
+        quizPanel: document.getElementById("quiz-panel"),
+        quizChoices: document.getElementById("quiz-choices"),
+        quizTimer: document.getElementById("quiz-timer"),
+        cheatsToggle: document.getElementById("cheats-toggle"),
+        modeInputs: [...document.querySelectorAll('input[name="play-mode"]')],
+        difficultyInputs: [
+            ...document.querySelectorAll('input[name="difficulty"]'),
+        ],
     };
 }
 
@@ -31,13 +56,62 @@ export class GameUi {
         this.toastTimer = null;
     }
 
+    getSelectedMode() {
+        const checked = this.els.modeInputs.find((input) => input.checked);
+        return checked?.value || "classic";
+    }
+
+    getSelectedDifficulty() {
+        const checked = this.els.difficultyInputs.find((input) => input.checked);
+        return checked?.value || "normal";
+    }
+
+    getSelectedCheats() {
+        return Boolean(this.els.cheatsToggle?.checked);
+    }
+
+    syncSettingsForm(modeId, difficultyId, cheatsEnabled) {
+        for (const input of this.els.modeInputs) {
+            input.checked = input.value === modeId;
+        }
+        for (const input of this.els.difficultyInputs) {
+            input.checked = input.value === difficultyId;
+        }
+        if (this.els.cheatsToggle) {
+            this.els.cheatsToggle.checked = Boolean(cheatsEnabled);
+        }
+        this.updateModeHint(modeId);
+    }
+
+    updateModeHint(modeId) {
+        const mode = PLAY_MODES[modeId] || PLAY_MODES.classic;
+        this.els.modeHint.textContent = mode.blurb;
+    }
+
+    persistSettings(modeId, difficultyId, cheatsEnabled) {
+        localStorage.setItem(MODE_KEY, modeId);
+        localStorage.setItem(DIFFICULTY_KEY, difficultyId);
+        localStorage.setItem(CHEATS_KEY, cheatsEnabled ? "on" : "off");
+    }
+
     setScore(score) {
         this.els.score.textContent = score;
     }
 
-    setHighScore(highScore) {
+    loadHighScore(modeId, difficultyId) {
+        const key = highScoreKey(modeId, difficultyId);
+        let value = Number(localStorage.getItem(key)) || 0;
+        // Migrate legacy single high-score into classic/normal once
+        if (!value && modeId === "classic" && difficultyId === "normal") {
+            value = Number(localStorage.getItem("feed-base-2-high-score")) || 0;
+            if (value) localStorage.setItem(key, String(value));
+        }
+        return value;
+    }
+
+    setHighScore(highScore, modeId, difficultyId) {
         this.els.highScore.textContent = highScore;
-        localStorage.setItem(HIGH_SCORE_KEY, String(highScore));
+        localStorage.setItem(highScoreKey(modeId, difficultyId), String(highScore));
     }
 
     setStreak(streak) {
@@ -45,8 +119,28 @@ export class GameUi {
         this.els.streakRow.classList.toggle("hidden", streak < 2);
     }
 
-    setTarget(target) {
-        this.els.currentTarget.textContent = target;
+    setTargetDisplay(targetDecimal, modeId, cheatsEnabled = false) {
+        const isReverse = modeId === "reverse";
+        const prompt = isReverse ? toBinary(targetDecimal) : String(targetDecimal);
+        const answer = isReverse ? String(targetDecimal) : toBinary(targetDecimal);
+
+        this.els.targetHead.textContent = "Find";
+        this.els.currentTarget.textContent = prompt;
+
+        if (cheatsEnabled) {
+            this.els.targetHint.textContent = answer;
+            this.els.targetHint.classList.remove("hidden");
+        } else {
+            this.els.targetHint.textContent = "";
+            this.els.targetHint.classList.add("hidden");
+        }
+    }
+
+    setModeBadge(modeId, difficultyId) {
+        const mode = PLAY_MODES[modeId]?.label || modeId;
+        const difficulty = DIFFICULTIES[difficultyId]?.label || difficultyId;
+        this.els.modeBadge.textContent = `${mode} · ${difficulty}`;
+        document.body.classList.toggle("mode-quiz", modeId === "quiz");
     }
 
     setPaused(paused, helpOpen) {
@@ -57,15 +151,28 @@ export class GameUi {
             "aria-hidden",
             String(!paused || helpOpen)
         );
+        document.body.classList.toggle("is-paused", paused && !helpOpen);
     }
 
     openHelp() {
+        this.showSettingsPanel();
         this.els.helpDialog.classList.remove("hidden");
         this.els.pauseOverlay.classList.add("hidden");
     }
 
     closeHelp() {
         this.els.helpDialog.classList.add("hidden");
+        this.showSettingsPanel();
+    }
+
+    showSettingsPanel() {
+        this.els.settingsPanel.classList.remove("hidden");
+        this.els.howtoPanel.classList.add("hidden");
+    }
+
+    showHowtoPanel() {
+        this.els.settingsPanel.classList.add("hidden");
+        this.els.howtoPanel.classList.remove("hidden");
     }
 
     syncSound(enabled) {
@@ -91,8 +198,53 @@ export class GameUi {
         }, TOAST_MS);
     }
 
-    async shareScore(score, highScore) {
-        const text = `I scored ${score} on Feed Base-2 (best ${highScore}) - catch binary for decimals 0–15!`;
+    setQuizVisible(visible) {
+        this.els.quizPanel.classList.toggle("hidden", !visible);
+    }
+
+    setQuizTimer(secondsLeft) {
+        const timer = this.els.quizTimer;
+        if (secondsLeft == null) {
+            timer.classList.add("hidden");
+            timer.textContent = "";
+            return;
+        }
+        timer.classList.remove("hidden");
+        timer.classList.toggle("urgent", secondsLeft <= 2);
+        timer.textContent = `${secondsLeft}s`;
+    }
+
+    renderQuizChoices(labels, onPick) {
+        const root = this.els.quizChoices;
+        root.innerHTML = "";
+        root.classList.toggle("cols-3", labels.length >= 5);
+
+        for (const label of labels) {
+            const button = document.createElement("button");
+            button.type = "button";
+            button.className = "quiz-choice";
+            button.textContent = label.text;
+            button.dataset.value = String(label.value);
+            button.addEventListener("click", () => onPick(label.value, button));
+            root.appendChild(button);
+        }
+    }
+
+    lockQuizChoices(correctValue, pickedValue) {
+        for (const button of this.els.quizChoices.querySelectorAll(".quiz-choice")) {
+            button.disabled = true;
+            const value = Number(button.dataset.value);
+            if (value === correctValue) button.classList.add("correct");
+            if (pickedValue != null && value === pickedValue && value !== correctValue) {
+                button.classList.add("wrong");
+            }
+        }
+    }
+
+    async shareScore(score, highScore, modeId, difficultyId) {
+        const mode = PLAY_MODES[modeId]?.label || modeId;
+        const difficulty = DIFFICULTIES[difficultyId]?.label || difficultyId;
+        const text = `I scored ${score} on Feed Base-2 (${mode} · ${difficulty}, best ${highScore})!`;
         const url = window.location.href;
 
         try {

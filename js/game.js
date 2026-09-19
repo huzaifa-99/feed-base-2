@@ -1,23 +1,29 @@
 import {
     COLORS,
     FONT,
-    HIGH_SCORE_KEY,
     PLAYER_SPEED,
     SCORE_STEP,
     SOUND_KEY,
 } from "./constants.js";
 import { GameComponent } from "./game-component.js";
+import {
+    DIFFICULTIES,
+    loadCheats,
+    loadDifficulty,
+    loadPlayMode,
+} from "./modes.js";
 import { ParticleSystem } from "./particles.js";
 import { SoundBoard } from "./sound.js";
 import { GameUi, bindUi } from "./ui.js";
 import {
     clamp,
     getMaxObstaclesCount,
-    getRandomBinary,
     getRandomSpeed,
     getRandomTarget,
     getRandomYPos,
+    quizOptions,
     streakMultiplier,
+    toBinary,
     toDecimal,
 } from "./utils.js";
 
@@ -27,14 +33,19 @@ export class Game {
         this.canvas = this.ui.els.canvas;
         this.ctx = this.canvas.getContext("2d");
 
+        this.modeId = loadPlayMode();
+        this.difficultyId = loadDifficulty();
+        this.difficulty = DIFFICULTIES[this.difficultyId];
+        this.cheatsEnabled = loadCheats();
+
         this.score = 0;
-        this.highScore = Number(localStorage.getItem(HIGH_SCORE_KEY)) || 0;
+        this.highScore = this.ui.loadHighScore(this.modeId, this.difficultyId);
         this.streak = 0;
         this.target = getRandomTarget();
         this.paused = true;
         this.helpOpen = true;
         this.obstacles = [];
-        this.maxObstacles = getMaxObstaclesCount(document.body.clientWidth);
+        this.maxObstacles = 0;
         this.particles = new ParticleSystem();
         this.soundEnabled = localStorage.getItem(SOUND_KEY) !== "off";
         this.sound = new SoundBoard(this.soundEnabled);
@@ -45,6 +56,11 @@ export class Game {
         this.flashUntil = 0;
         this.flashColor = null;
         this.keys = { ArrowLeft: false, ArrowRight: false };
+
+        this.quizLocked = false;
+        this.quizTimerId = null;
+        this.quizDeadline = null;
+        this.quizRemainingMs = null;
 
         this.player = new GameComponent({
             context: this.ctx,
@@ -59,11 +75,19 @@ export class Game {
         });
     }
 
+    get isQuiz() {
+        return this.modeId === "quiz";
+    }
+
+    get isReverse() {
+        return this.modeId === "reverse";
+    }
+
     start() {
-        this.ctx.font = `${FONT.large} ${FONT.family}`;
-        this.ui.setTarget(this.target);
+        this.ui.syncSettingsForm(this.modeId, this.difficultyId, this.cheatsEnabled);
+        this.applyPresentation();
         this.ui.setScore(this.score);
-        this.ui.setHighScore(this.highScore);
+        this.ui.setHighScore(this.highScore, this.modeId, this.difficultyId);
         this.ui.setStreak(0);
         this.ui.syncSound(this.soundEnabled);
 
@@ -81,6 +105,21 @@ export class Game {
         requestAnimationFrame((t) => this.loop(t));
     }
 
+    applyPresentation() {
+        this.ui.setModeBadge(this.modeId, this.difficultyId);
+        this.ui.setTargetDisplay(this.target, this.modeId, this.cheatsEnabled);
+        this.ui.setQuizVisible(this.isQuiz);
+        this.refreshObstacleCap();
+        document.body.classList.toggle("mode-quiz", this.isQuiz);
+    }
+
+    refreshObstacleCap() {
+        this.maxObstacles = getMaxObstaclesCount(
+            this.canvas.width || window.innerWidth,
+            this.difficulty.obstacleScale
+        );
+    }
+
     bindEvents() {
         const { playBtn, pauseBtn, helpClose, helpOpen, soundBtn, shareBtn } =
             this.ui.els;
@@ -90,18 +129,32 @@ export class Game {
             this.setPaused(false);
         });
         pauseBtn.addEventListener("click", () => this.setPaused(true));
-        helpClose.addEventListener("click", () => this.closeHelp());
+        helpClose.addEventListener("click", () => this.closeHelp(true));
         helpOpen.addEventListener("click", () => this.openHelp());
+        this.ui.els.howtoOpen.addEventListener("click", () => this.ui.showHowtoPanel());
+        this.ui.els.howtoBack.addEventListener("click", () => this.ui.showSettingsPanel());
         soundBtn.addEventListener("click", () => this.toggleSound());
         shareBtn.addEventListener("click", () =>
-            this.ui.shareScore(this.score, this.highScore)
+            this.ui.shareScore(
+                this.score,
+                this.highScore,
+                this.modeId,
+                this.difficultyId
+            )
         );
+
+        for (const input of this.ui.els.modeInputs) {
+            input.addEventListener("change", () => {
+                this.ui.updateModeHint(this.ui.getSelectedMode());
+            });
+        }
+
         window.addEventListener("resize", () => this.resize());
 
         document.addEventListener(
             "touchstart",
             (e) => {
-                if (this.helpOpen) return;
+                if (this.helpOpen || this.isQuiz) return;
                 this.touchOriginX = this.player.xPos;
                 this.touchStartX = e.touches[0].clientX;
             },
@@ -138,7 +191,7 @@ export class Game {
         }
 
         if (e.code === "Escape") {
-            if (this.helpOpen) this.closeHelp();
+            if (this.helpOpen) this.closeHelp(true);
             else this.openHelp();
             return;
         }
@@ -154,7 +207,10 @@ export class Game {
             return;
         }
 
-        if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+        if (
+            !this.isQuiz &&
+            (e.code === "ArrowLeft" || e.code === "ArrowRight")
+        ) {
             this.keys[e.code] = true;
         }
     }
@@ -162,19 +218,64 @@ export class Game {
     setPaused(paused) {
         this.paused = paused;
         this.ui.setPaused(paused, this.helpOpen);
+
+        if (this.isQuiz) {
+            if (paused) this.pauseQuizTimer();
+            else if (!this.helpOpen) {
+                this.resumeQuizTimer();
+                this.ensureQuizRound();
+            }
+        }
     }
 
     openHelp() {
         this.helpOpen = true;
+        this.clearQuizTimer();
         this.setPaused(true);
+        this.ui.syncSettingsForm(this.modeId, this.difficultyId, this.cheatsEnabled);
         this.ui.openHelp();
     }
 
-    closeHelp() {
+    closeHelp(applySettings) {
         this.helpOpen = false;
         this.ui.closeHelp();
         this.sound.ensure();
+
+        if (applySettings) {
+            const nextMode = this.ui.getSelectedMode();
+            const nextDifficulty = this.ui.getSelectedDifficulty();
+            const nextCheats = this.ui.getSelectedCheats();
+            const changed =
+                nextMode !== this.modeId || nextDifficulty !== this.difficultyId;
+            this.modeId = nextMode;
+            this.difficultyId = nextDifficulty;
+            this.difficulty = DIFFICULTIES[this.difficultyId];
+            this.cheatsEnabled = nextCheats;
+            this.ui.persistSettings(this.modeId, this.difficultyId, this.cheatsEnabled);
+
+            if (changed) {
+                this.resetRun();
+            } else {
+                this.applyPresentation();
+                if (this.isQuiz) this.nextQuizRound();
+            }
+        }
+
         this.setPaused(false);
+    }
+
+    resetRun() {
+        this.score = 0;
+        this.highScore = this.ui.loadHighScore(this.modeId, this.difficultyId);
+        this.setStreak(0);
+        this.obstacles = [];
+        this.particles.particles = [];
+        this.target = getRandomTarget();
+        this.ui.setScore(this.score);
+        this.ui.setHighScore(this.highScore, this.modeId, this.difficultyId);
+        this.applyPresentation();
+        this.clearQuizTimer();
+        if (this.isQuiz) this.nextQuizRound();
     }
 
     toggleSound() {
@@ -196,7 +297,7 @@ export class Game {
     resize() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
-        this.maxObstacles = getMaxObstaclesCount(this.canvas.width);
+        this.refreshObstacleCap();
         this.clampPlayer();
         this.drawFrame(0, true);
     }
@@ -205,7 +306,7 @@ export class Game {
         this.score = Math.max(0, this.score + delta);
         if (this.score > this.highScore) {
             this.highScore = this.score;
-            this.ui.setHighScore(this.highScore);
+            this.ui.setHighScore(this.highScore, this.modeId, this.difficultyId);
         }
         this.ui.setScore(this.score);
     }
@@ -217,12 +318,12 @@ export class Game {
 
     setNewTarget() {
         this.target = getRandomTarget();
-        this.ui.setTarget(this.target);
+        this.ui.setTargetDisplay(this.target, this.modeId, this.cheatsEnabled);
     }
 
     speedForScore() {
         const boost = Math.min(this.score / 100, 2);
-        return 1 + boost * 0.35;
+        return (1 + boost * 0.35) * this.difficulty.speedScale;
     }
 
     randomX(width) {
@@ -231,24 +332,32 @@ export class Game {
         );
     }
 
+    formatMiss(value) {
+        return `${toBinary(value)} = ${value}`;
+    }
+
     spawnObstacles() {
+        if (this.isQuiz) return;
+
         const needed = this.maxObstacles - this.obstacles.length;
         for (let i = 0; i < needed; i++) {
-            const binary = getRandomBinary();
+            const value = getRandomTarget();
+            const text = this.isReverse ? String(value) : toBinary(value);
             const obstacle = new GameComponent({
                 context: this.ctx,
-                text: binary,
+                text,
                 color: COLORS.primaryColor,
                 bgColor: COLORS.blackColor,
                 xPos: 0,
                 xPadding: 8,
                 yPos: getRandomYPos(),
-                moveSpeed: getRandomSpeed() * this.speedForScore(),
+                moveSpeed: getRandomSpeed(this.speedForScore()),
                 rounding: 5,
             });
+            obstacle.value = value;
 
             this.ctx.font = `${FONT.small} ${FONT.family}`;
-            obstacle.width = Math.ceil(this.ctx.measureText(binary).width);
+            obstacle.width = Math.ceil(this.ctx.measureText(text).width);
             obstacle.height = 18;
             obstacle.xPos = this.randomX(obstacle.width + obstacle.xPadding);
             this.obstacles.push(obstacle);
@@ -256,32 +365,146 @@ export class Game {
     }
 
     handleCatch(obstacle) {
-        const decimal = toDecimal(obstacle.text);
-        const { x, y } = obstacle.center;
+        const value =
+            obstacle.value != null
+                ? obstacle.value
+                : this.isReverse
+                  ? Number(obstacle.text)
+                  : toDecimal(obstacle.text);
+        this.resolveAnswer(value === this.target, value, obstacle.center);
+    }
 
-        if (decimal === this.target) {
+    resolveAnswer(correct, value, origin = null) {
+        const point = origin || {
+            x: this.canvas.width / 2,
+            y: this.canvas.height / 2,
+        };
+
+        if (correct) {
             this.setStreak(this.streak + 1);
             const points = Math.round(SCORE_STEP * streakMultiplier(this.streak));
             this.updateScore(points);
-            this.setNewTarget();
             this.flashColor = COLORS.hitCorrect;
-            this.particles.spawn(x, y, COLORS.hitCorrect, 16);
+            this.particles.spawn(point.x, point.y, COLORS.hitCorrect, 16);
             this.sound.correct(this.streak);
             const bonus =
                 this.streak > 1
                     ? `  ·  x${streakMultiplier(this.streak).toFixed(1)} streak`
                     : "";
             this.ui.showToast(`+${points}${bonus}`, "correct");
+            if (!this.isQuiz) this.setNewTarget();
         } else {
             this.setStreak(0);
             this.updateScore(-SCORE_STEP);
             this.flashColor = COLORS.hitWrong;
-            this.particles.spawn(x, y, COLORS.hitWrong, 10);
+            this.particles.spawn(point.x, point.y, COLORS.hitWrong, 10);
             this.sound.wrong();
-            this.ui.showToast(`${obstacle.text} = ${decimal}`, "wrong");
+            this.ui.showToast(this.formatMiss(value), "wrong");
         }
 
         this.flashUntil = performance.now() + 180;
+    }
+
+    ensureQuizRound() {
+        if (!this.isQuiz) return;
+        if (!this.ui.els.quizChoices.children.length) {
+            this.nextQuizRound();
+        }
+    }
+
+    nextQuizRound() {
+        if (!this.isQuiz) return;
+        this.quizLocked = false;
+        this.clearQuizTimer();
+        this.setNewTarget();
+
+        const options = quizOptions(this.target, this.difficulty.quizChoices);
+        this.ui.renderQuizChoices(
+            options.map((value) => ({ value, text: toBinary(value) })),
+            (picked, button) => this.onQuizPick(picked, button)
+        );
+
+        this.startQuizTimer();
+    }
+
+    startQuizTimer() {
+        const seconds = this.difficulty.quizSeconds;
+        this.quizRemainingMs = null;
+        if (!seconds) {
+            this.ui.setQuizTimer(null);
+            return;
+        }
+
+        this.quizDeadline = performance.now() + seconds * 1000;
+        this.ui.setQuizTimer(seconds);
+        this.runQuizTimerTicks();
+    }
+
+    runQuizTimerTicks() {
+        if (this.quizTimerId) {
+            clearInterval(this.quizTimerId);
+            this.quizTimerId = null;
+        }
+        this.quizTimerId = setInterval(() => {
+            if (this.helpOpen || this.quizLocked || this.paused) return;
+            const left = Math.ceil((this.quizDeadline - performance.now()) / 1000);
+            if (left <= 0) {
+                this.ui.setQuizTimer(0);
+                this.onQuizTimeout();
+                return;
+            }
+            this.ui.setQuizTimer(left);
+        }, 200);
+    }
+
+    pauseQuizTimer() {
+        if (!this.quizDeadline) return;
+        this.quizRemainingMs = Math.max(0, this.quizDeadline - performance.now());
+        if (this.quizTimerId) {
+            clearInterval(this.quizTimerId);
+            this.quizTimerId = null;
+        }
+        this.ui.setQuizTimer(Math.ceil(this.quizRemainingMs / 1000));
+    }
+
+    resumeQuizTimer() {
+        if (this.quizRemainingMs == null) return;
+        this.quizDeadline = performance.now() + this.quizRemainingMs;
+        this.quizRemainingMs = null;
+        this.ui.setQuizTimer(Math.ceil((this.quizDeadline - performance.now()) / 1000));
+        this.runQuizTimerTicks();
+    }
+
+    clearQuizTimer() {
+        if (this.quizTimerId) {
+            clearInterval(this.quizTimerId);
+            this.quizTimerId = null;
+        }
+        this.quizDeadline = null;
+        this.quizRemainingMs = null;
+        this.ui.setQuizTimer(null);
+    }
+
+    onQuizTimeout() {
+        if (this.quizLocked || this.paused) return;
+        this.quizLocked = true;
+        this.clearQuizTimer();
+        this.ui.lockQuizChoices(this.target, null);
+        this.resolveAnswer(false, this.target);
+        setTimeout(() => {
+            if (this.isQuiz && !this.helpOpen && !this.paused) this.nextQuizRound();
+        }, 900);
+    }
+
+    onQuizPick(picked, _button) {
+        if (this.quizLocked || this.helpOpen || this.paused) return;
+        this.quizLocked = true;
+        this.clearQuizTimer();
+        this.ui.lockQuizChoices(this.target, picked);
+        this.resolveAnswer(picked === this.target, picked);
+        setTimeout(() => {
+            if (this.isQuiz && !this.helpOpen && !this.paused) this.nextQuizRound();
+        }, 900);
     }
 
     drawFrame(deltaSeconds, forceDraw = false) {
@@ -295,6 +518,12 @@ export class Game {
             ctx.globalAlpha = 0.18;
             ctx.fillRect(0, 0, canvas.width, canvas.height);
             ctx.globalAlpha = 1;
+        }
+
+        if (this.isQuiz) {
+            if (!this.paused) this.particles.update(deltaSeconds);
+            this.particles.draw(ctx);
+            return;
         }
 
         if (!this.paused) {

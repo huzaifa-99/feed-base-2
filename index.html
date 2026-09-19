@@ -16,6 +16,7 @@
     <!-- header -->
     <header>
         <div class="section-left">
+            <span class="mode-badge" id="mode-badge">Classic · Normal</span>
             <div class="score-row">
                 <span>Score</span>
                 <span id="score">0</span>
@@ -30,12 +31,13 @@
             </div>
         </div>
         <div class="section-center">
-            <span class="target-head">
+            <span class="target-head" id="target-head">
                 Find
             </span>
             <span class="target-number" id="current-target">
                 0
             </span>
+            <span class="target-hint hidden" id="target-hint" aria-label="Cheat hint"></span>
         </div>
         <div class="section-right">
             <button class="button" id="sound-btn" title="Toggle sound" type="button" aria-label="Toggle sound"
@@ -96,41 +98,105 @@
 
     <div class="feedback-toast hidden" id="feedback-toast" aria-live="polite"></div>
 
-    <!-- help dialog -->
+    <!-- help / settings dialog -->
     <div class="help-dialog" id="help-dialog" role="dialog" aria-modal="true" aria-labelledby="help-title">
         <div class="help-dialog-content">
-            <p id="help-title">
-                Play with 4-bit binary numbers - decimals from 0–15 (see <a
-                    aria-label="Link to image with decimal to binary conversions"
-                    href="./assets/images/binaryConversion.png"
-                    title="Link to image with decimal to binary conversions">binary conversions</a>)
-            </p>
-            <ul>
-                <li>
-                    A target decimal (0–15) is shown in the header
-                </li>
-                <li>
-                    Catch the falling block with that number in binary (e.g. 2 is 0010)
-                </li>
-                <li>
-                    Correct catches score points and build a streak bonus
-                </li>
-                <li>
-                    Misses teach you the value (e.g. 1011 = 11) and reset the streak
-                </li>
-                <li>
-                    Arrows or drag to move · Space pauses · Esc toggles help
-                </li>
-            </ul>
-            <button class="button btn-primary btn-lg mx-auto" id="help-close" type="button">
-                Play
-            </button>
+            <div class="dialog-panel" id="settings-panel">
+                <h1 class="dialog-title" id="help-title">Feed Base-2</h1>
+                <p class="dialog-subtitle">4-bit binary practice · 0–15</p>
+
+                <div class="settings-block">
+                    <span class="settings-label">Mode</span>
+                    <div class="option-row" role="radiogroup" aria-label="Game mode" id="mode-options">
+                        <label class="option-chip">
+                            <input type="radio" name="play-mode" value="classic" checked>
+                            <span>Classic</span>
+                        </label>
+                        <label class="option-chip">
+                            <input type="radio" name="play-mode" value="reverse">
+                            <span>Reverse</span>
+                        </label>
+                        <label class="option-chip">
+                            <input type="radio" name="play-mode" value="quiz">
+                            <span>Quiz</span>
+                        </label>
+                    </div>
+                    <p class="settings-hint" id="mode-hint">Find a decimal — catch its binary</p>
+                </div>
+
+                <div class="settings-block">
+                    <span class="settings-label">Difficulty</span>
+                    <div class="option-row" role="radiogroup" aria-label="Difficulty" id="difficulty-options">
+                        <label class="option-chip">
+                            <input type="radio" name="difficulty" value="easy">
+                            <span>Easy</span>
+                        </label>
+                        <label class="option-chip">
+                            <input type="radio" name="difficulty" value="normal" checked>
+                            <span>Normal</span>
+                        </label>
+                        <label class="option-chip">
+                            <input type="radio" name="difficulty" value="hard">
+                            <span>Hard</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="settings-block cheats-block">
+                    <span class="settings-label">Cheats</span>
+                    <label class="cheats-toggle" for="cheats-toggle">
+                        <input type="checkbox" id="cheats-toggle" name="cheats">
+                        <span class="cheats-toggle-track" aria-hidden="true">
+                            <span class="cheats-toggle-thumb"></span>
+                        </span>
+                        <span class="cheats-toggle-copy">
+                            <span class="cheats-toggle-title">Show answers</span>
+                            <span class="cheats-toggle-desc">Reveal the match under Find</span>
+                        </span>
+                    </label>
+                </div>
+
+                <button class="button btn-primary btn-lg mx-auto" id="help-close" type="button">
+                    Play
+                </button>
+                <button class="button btn-link mx-auto" id="howto-open" type="button">
+                    How to play
+                </button>
+            </div>
+
+            <div class="dialog-panel hidden" id="howto-panel">
+                <h2 class="dialog-title">How to play</h2>
+                <p class="dialog-subtitle">
+                    Decimals 0–15 as 4-bit binary
+                    (<a aria-label="Link to image with decimal to binary conversions"
+                        href="./assets/images/binaryConversion.png"
+                        title="Binary conversions chart">chart</a>
+                </p>
+                <ul class="howto-list">
+                    <li>Classic: find a decimal, catch its binary</li>
+                    <li>Reverse: find a binary, catch its decimal</li>
+                    <li>Quiz: pick the matching binary from the choices</li>
+                    <li>Correct answers score points and build a streak</li>
+                    <li>Misses show the conversion and reset the streak</li>
+                    <li>Classic / Reverse: arrows or drag to move</li>
+                    <li>Space pauses in all modes · Esc opens settings</li>
+                    <li>Quiz Hard adds a countdown timer</li>
+                </ul>
+                <button class="button btn-primary btn-lg mx-auto" id="howto-back" type="button">
+                    Back
+                </button>
+            </div>
         </div>
     </div>
 
     <div class="pause-overlay hidden" id="pause-overlay" aria-hidden="true">
         <span class="pause-title">Paused</span>
         <span class="pause-hint">Space or tap Play to resume</span>
+    </div>
+
+    <div class="quiz-panel hidden" id="quiz-panel" aria-label="Quiz choices">
+        <div class="quiz-timer hidden" id="quiz-timer" aria-live="polite"></div>
+        <div class="quiz-choices" id="quiz-choices"></div>
     </div>
 
     <canvas id="game-canvas" aria-label="Feed Base-2 game area">

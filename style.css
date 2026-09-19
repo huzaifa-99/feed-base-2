@@ -98,7 +98,8 @@ header {
     padding-top: max(8px, env(safe-area-inset-top));
     color: var(--white);
     background-color: var(--primary);
-    z-index: 5;
+    z-index: 50;
+    pointer-events: auto;
 }
 
 .section-right {
@@ -107,6 +108,8 @@ header {
     justify-content: flex-end;
     gap: 2px;
     flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
 }
 
 .section-left {
@@ -149,19 +152,36 @@ header {
     font-weight: 700;
 }
 
+.target-hint {
+    margin-top: 1px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    color: #b8f5c4;
+}
+
+.mode-badge {
+    font-size: 0.7rem;
+    letter-spacing: 0.04em;
+    opacity: 0.9;
+    text-transform: uppercase;
+    line-height: 1.2;
+}
+
 .help-dialog {
     display: flex;
     flex-direction: column;
     align-items: center;
+    justify-content: center;
     position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    inset: 0;
     width: 100%;
     height: 100vh;
     height: 100dvh;
-    background-color: var(--green-200);
-    z-index: 20;
+    padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+    background-color: rgba(14, 130, 37, 0.28);
+    backdrop-filter: blur(2px);
+    z-index: 60;
 }
 
 .pause-overlay {
@@ -173,7 +193,7 @@ header {
     justify-content: center;
     gap: 10px;
     pointer-events: none;
-    z-index: 10;
+    z-index: 20;
     color: var(--white);
     background-color: rgba(0, 0, 0, 0.35);
 }
@@ -193,7 +213,7 @@ header {
     top: calc(60px + env(safe-area-inset-top, 0px) + 10px);
     left: 50%;
     transform: translateX(-50%) translateY(-6px);
-    z-index: 15;
+    z-index: 55;
     padding: 10px 16px;
     border-radius: 8px;
     font-size: 1rem;
@@ -226,13 +246,279 @@ header {
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    margin: auto;
+    justify-content: flex-start;
+    width: min(100%, 520px);
+    max-height: min(92dvh, 880px);
+    overflow: auto;
+    gap: 0;
+    padding: 24px 18px;
+    background-color: rgba(0, 0, 0, 0.88);
     border: 1px solid var(--gray);
+    border-radius: 10px;
+}
+
+.dialog-panel {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 18px;
     width: 100%;
-    gap: 24px;
-    padding: 12px 8px;
-    background-color: var(--black);
+}
+
+.dialog-title {
+    margin: 0;
+    font-size: 1.5rem;
+    font-weight: 700;
+    text-align: center;
+}
+
+.dialog-subtitle {
+    margin: -8px 0 0;
+    font-size: 0.95rem;
+    text-align: center;
+    opacity: 0.85;
+}
+
+.howto-list {
+    max-width: 100%;
+    width: 100%;
+    margin: 0;
+    padding-left: 1.15rem;
+    gap: 10px;
+}
+
+.btn-link {
+    min-height: 40px;
+    font-size: 1rem !important;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+    opacity: 0.9;
+}
+
+.settings-block {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 420px;
+}
+
+.settings-label {
+    font-size: 0.85rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    opacity: 0.75;
+}
+
+.settings-hint {
+    font-size: 0.85rem !important;
+    opacity: 0.8;
+    text-align: center;
+    margin: 0;
+}
+
+.option-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+}
+
+.option-chip {
+    cursor: pointer;
+}
+
+.option-chip input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.option-chip span {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 40px;
+    padding: 8px 14px;
+    border: 1px solid var(--gray);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    color: var(--white);
+    background: var(--secondary);
+    transition: border-color 120ms ease, background-color 120ms ease;
+}
+
+.option-chip input:checked + span {
+    border-color: var(--primary);
+    background: rgba(14, 130, 37, 0.35);
+}
+
+.option-chip input:focus-visible + span {
+    outline: 2px solid var(--white);
+    outline-offset: 2px;
+}
+
+.cheats-block {
+    margin-top: 4px;
+}
+
+.cheats-toggle {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    width: 100%;
+    max-width: 360px;
+    padding: 12px 14px;
+    border: 1px solid var(--gray);
+    border-radius: 8px;
+    background: var(--secondary);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.cheats-toggle input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.cheats-toggle-track {
+    position: relative;
+    flex: 0 0 auto;
+    width: 48px;
+    height: 28px;
+    border-radius: 999px;
+    background: #3a3a3a;
+    border: 1px solid #555;
+    transition: background-color 140ms ease, border-color 140ms ease;
+}
+
+.cheats-toggle-thumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--white);
+    transition: transform 140ms ease;
+}
+
+.cheats-toggle input:checked + .cheats-toggle-track {
+    background: rgba(14, 130, 37, 0.7);
+    border-color: var(--primary);
+}
+
+.cheats-toggle input:checked + .cheats-toggle-track .cheats-toggle-thumb {
+    transform: translateX(20px);
+}
+
+.cheats-toggle input:focus-visible + .cheats-toggle-track {
+    outline: 2px solid var(--white);
+    outline-offset: 2px;
+}
+
+.cheats-toggle-copy {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    text-align: left;
+    min-width: 0;
+}
+
+.cheats-toggle-title {
+    font-size: 1rem;
+    font-weight: 700;
+}
+
+.cheats-toggle-desc {
+    font-size: 0.8rem;
+    opacity: 0.75;
+    line-height: 1.3;
+}
+
+.quiz-panel {
+    position: fixed;
+    inset: 0;
+    z-index: 10;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    padding: 100px 16px 32px;
+    pointer-events: none;
+}
+
+.quiz-panel:not(.hidden) {
+    pointer-events: auto;
+}
+
+.quiz-timer {
+    font-size: 1.25rem;
+    letter-spacing: 0.06em;
+    color: #b8f5c4;
+}
+
+.quiz-timer.urgent {
+    color: #ffb4b0;
+}
+
+.quiz-choices {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    width: min(100%, 420px);
+}
+
+.quiz-choices.cols-3 {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.quiz-choice {
+    min-height: 64px;
+    padding: 14px 12px;
+    border: 1px solid var(--gray);
+    border-radius: 8px;
+    background: var(--black);
+    color: var(--primary);
+    font-size: 1.35rem;
+    font-family: inherit;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.quiz-choice:hover,
+.quiz-choice:focus-visible {
+    border-color: var(--primary);
+    filter: brightness(1.15);
+}
+
+.quiz-choice:disabled {
+    cursor: default;
+    opacity: 0.7;
+}
+
+.quiz-choice.correct {
+    border-color: var(--hit-correct);
+    color: var(--hit-correct);
+}
+
+.quiz-choice.wrong {
+    border-color: var(--hit-wrong);
+    color: #ffb4b0;
+}
+
+body.mode-quiz canvas {
+    opacity: 0.35;
+    pointer-events: none;
+}
+
+body.is-paused .quiz-panel {
+    pointer-events: none;
+    opacity: 0.55;
 }
 
 .button {
@@ -311,13 +597,24 @@ header {
         font-weight: 900;
     }
 
+    .mode-badge {
+        font-size: 0.75rem;
+    }
+
     .feedback-toast {
         top: calc(70px + env(safe-area-inset-top, 0px) + 12px);
         font-size: 1.15rem;
     }
 
     .help-dialog-content {
-        width: 70%;
+        width: min(100%, 560px);
+        gap: 22px;
+        padding: 28px 24px;
+    }
+
+    .quiz-choice {
+        min-height: 72px;
+        font-size: 1.6rem;
     }
 
     .button {
@@ -331,8 +628,8 @@ header {
 
 @media (min-width: 1024px) {
     .help-dialog-content {
-        width: 50%;
-        gap: 36px;
-        padding: 12px;
+        width: min(100%, 600px);
+        gap: 24px;
+        padding: 32px 28px;
     }
 }
