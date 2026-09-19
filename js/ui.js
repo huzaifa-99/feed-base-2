@@ -3,11 +3,19 @@ import {
     DIFFICULTIES,
     DIFFICULTY_KEY,
     CHEATS_KEY,
+    CONTROLS_KEY,
     MODE_KEY,
     PLAY_MODES,
     highScoreKey,
 } from "./modes.js";
 import { toBinary } from "./utils.js";
+
+export function syncHeaderOffset() {
+    const header = document.querySelector("header");
+    if (!header) return;
+    const height = Math.ceil(header.getBoundingClientRect().height);
+    document.documentElement.style.setProperty("--header-offset", `${height}px`);
+}
 
 /** Reads DOM nodes used by the game chrome. */
 export function bindUi() {
@@ -42,7 +50,11 @@ export function bindUi() {
         quizPanel: document.getElementById("quiz-panel"),
         quizChoices: document.getElementById("quiz-choices"),
         quizTimer: document.getElementById("quiz-timer"),
+        moveControls: document.getElementById("move-controls"),
+        moveLeft: document.getElementById("move-left"),
+        moveRight: document.getElementById("move-right"),
         cheatsToggle: document.getElementById("cheats-toggle"),
+        controlsToggle: document.getElementById("controls-toggle"),
         modeInputs: [...document.querySelectorAll('input[name="play-mode"]')],
         difficultyInputs: [
             ...document.querySelectorAll('input[name="difficulty"]'),
@@ -70,7 +82,11 @@ export class GameUi {
         return Boolean(this.els.cheatsToggle?.checked);
     }
 
-    syncSettingsForm(modeId, difficultyId, cheatsEnabled) {
+    getSelectedOnScreenControls() {
+        return Boolean(this.els.controlsToggle?.checked);
+    }
+
+    syncSettingsForm(modeId, difficultyId, cheatsEnabled, onScreenControls) {
         for (const input of this.els.modeInputs) {
             input.checked = input.value === modeId;
         }
@@ -80,6 +96,9 @@ export class GameUi {
         if (this.els.cheatsToggle) {
             this.els.cheatsToggle.checked = Boolean(cheatsEnabled);
         }
+        if (this.els.controlsToggle) {
+            this.els.controlsToggle.checked = Boolean(onScreenControls);
+        }
         this.updateModeHint(modeId);
     }
 
@@ -88,10 +107,11 @@ export class GameUi {
         this.els.modeHint.textContent = mode.blurb;
     }
 
-    persistSettings(modeId, difficultyId, cheatsEnabled) {
+    persistSettings(modeId, difficultyId, cheatsEnabled, onScreenControls) {
         localStorage.setItem(MODE_KEY, modeId);
         localStorage.setItem(DIFFICULTY_KEY, difficultyId);
         localStorage.setItem(CHEATS_KEY, cheatsEnabled ? "on" : "off");
+        localStorage.setItem(CONTROLS_KEY, onScreenControls ? "on" : "off");
     }
 
     setScore(score) {
@@ -117,6 +137,7 @@ export class GameUi {
     setStreak(streak) {
         this.els.streak.textContent = streak;
         this.els.streakRow.classList.toggle("hidden", streak < 2);
+        syncHeaderOffset();
     }
 
     setTargetDisplay(targetDecimal, modeId, cheatsEnabled = false) {
@@ -134,6 +155,7 @@ export class GameUi {
             this.els.targetHint.textContent = "";
             this.els.targetHint.classList.add("hidden");
         }
+        syncHeaderOffset();
     }
 
     setModeBadge(modeId, difficultyId) {
@@ -141,6 +163,7 @@ export class GameUi {
         const difficulty = DIFFICULTIES[difficultyId]?.label || difficultyId;
         this.els.modeBadge.textContent = `${mode} · ${difficulty}`;
         document.body.classList.toggle("mode-quiz", modeId === "quiz");
+        syncHeaderOffset();
     }
 
     setPaused(paused, helpOpen) {
@@ -198,6 +221,10 @@ export class GameUi {
         }, TOAST_MS);
     }
 
+    setMoveControlsVisible(visible) {
+        this.els.moveControls.classList.toggle("hidden", !visible);
+    }
+
     setQuizVisible(visible) {
         this.els.quizPanel.classList.toggle("hidden", !visible);
     }
@@ -246,21 +273,56 @@ export class GameUi {
         const difficulty = DIFFICULTIES[difficultyId]?.label || difficultyId;
         const text = `I scored ${score} on Feed Base-2 (${mode} · ${difficulty}, best ${highScore})!`;
         const url = window.location.href;
+        const payload = `${text}\n${url}`;
 
-        try {
-            if (navigator.share) {
-                await navigator.share({ title: "Feed Base-2", text, url });
-                return;
+        // Web Share works best as a single text blob on many mobile browsers
+        if (navigator.share) {
+            try {
+                const data = { title: "Feed Base-2", text: payload };
+                if (!navigator.canShare || navigator.canShare(data)) {
+                    await navigator.share(data);
+                    return;
+                }
+            } catch (err) {
+                if (err && err.name === "AbortError") return;
+                // Fall through to clipboard / manual copy
             }
-        } catch (err) {
-            if (err && err.name === "AbortError") return;
+        }
+
+        if (await this.copyText(payload)) {
+            this.showToast("Score copied", "correct");
+            return;
+        }
+
+        this.showToast("Sharing needs HTTPS (or localhost)", "wrong");
+    }
+
+    async copyText(value) {
+        if (navigator.clipboard?.writeText && window.isSecureContext) {
+            try {
+                await navigator.clipboard.writeText(value);
+                return true;
+            } catch {
+                // try legacy path below
+            }
         }
 
         try {
-            await navigator.clipboard.writeText(`${text}\n${url}`);
-            this.showToast("Score copied", "correct");
+            const field = document.createElement("textarea");
+            field.value = value;
+            field.setAttribute("readonly", "");
+            field.style.position = "fixed";
+            field.style.opacity = "0";
+            field.style.pointerEvents = "none";
+            document.body.appendChild(field);
+            field.focus();
+            field.select();
+            field.setSelectionRange(0, field.value.length);
+            const ok = document.execCommand("copy");
+            document.body.removeChild(field);
+            return ok;
         } catch {
-            this.showToast("Could not share score", "wrong");
+            return false;
         }
     }
 }

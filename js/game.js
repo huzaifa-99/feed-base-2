@@ -10,11 +10,12 @@ import {
     DIFFICULTIES,
     loadCheats,
     loadDifficulty,
+    loadOnScreenControls,
     loadPlayMode,
 } from "./modes.js";
 import { ParticleSystem } from "./particles.js";
 import { SoundBoard } from "./sound.js";
-import { GameUi, bindUi } from "./ui.js";
+import { GameUi, bindUi, syncHeaderOffset } from "./ui.js";
 import {
     clamp,
     getMaxObstaclesCount,
@@ -37,6 +38,7 @@ export class Game {
         this.difficultyId = loadDifficulty();
         this.difficulty = DIFFICULTIES[this.difficultyId];
         this.cheatsEnabled = loadCheats();
+        this.onScreenControls = loadOnScreenControls();
 
         this.score = 0;
         this.highScore = this.ui.loadHighScore(this.modeId, this.difficultyId);
@@ -84,7 +86,12 @@ export class Game {
     }
 
     start() {
-        this.ui.syncSettingsForm(this.modeId, this.difficultyId, this.cheatsEnabled);
+        this.ui.syncSettingsForm(
+            this.modeId,
+            this.difficultyId,
+            this.cheatsEnabled,
+            this.onScreenControls
+        );
         this.applyPresentation();
         this.ui.setScore(this.score);
         this.ui.setHighScore(this.highScore, this.modeId, this.difficultyId);
@@ -109,6 +116,7 @@ export class Game {
         this.ui.setModeBadge(this.modeId, this.difficultyId);
         this.ui.setTargetDisplay(this.target, this.modeId, this.cheatsEnabled);
         this.ui.setQuizVisible(this.isQuiz);
+        this.ui.setMoveControlsVisible(!this.isQuiz && this.onScreenControls);
         this.refreshObstacleCap();
         document.body.classList.toggle("mode-quiz", this.isQuiz);
     }
@@ -150,17 +158,56 @@ export class Game {
         }
 
         window.addEventListener("resize", () => this.resize());
+        window.visualViewport?.addEventListener("resize", () => this.resize());
 
-        document.addEventListener(
+        this.bindMoveControls();
+        this.bindCanvasTouch();
+
+        window.addEventListener("keydown", (e) => this.onKeyDown(e));
+        window.addEventListener("keyup", (e) => {
+            if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+                this.keys[e.code] = false;
+            }
+        });
+    }
+
+    bindMoveControls() {
+        const bindHold = (button, key) => {
+            const press = (e) => {
+                e.preventDefault();
+                if (this.paused || this.helpOpen || this.isQuiz) return;
+                this.keys[key] = true;
+                button.classList.add("active");
+            };
+            const release = () => {
+                this.keys[key] = false;
+                button.classList.remove("active");
+            };
+
+            button.addEventListener("pointerdown", press);
+            button.addEventListener("pointerup", release);
+            button.addEventListener("pointerleave", release);
+            button.addEventListener("pointercancel", release);
+            button.addEventListener("contextmenu", (e) => e.preventDefault());
+        };
+
+        bindHold(this.ui.els.moveLeft, "ArrowLeft");
+        bindHold(this.ui.els.moveRight, "ArrowRight");
+    }
+
+    bindCanvasTouch() {
+        const canvas = this.canvas;
+
+        canvas.addEventListener(
             "touchstart",
             (e) => {
-                if (this.helpOpen || this.isQuiz) return;
+                if (this.helpOpen || this.isQuiz || this.paused) return;
                 this.touchOriginX = this.player.xPos;
                 this.touchStartX = e.touches[0].clientX;
             },
             { passive: true }
         );
-        document.addEventListener(
+        canvas.addEventListener(
             "touchmove",
             (e) => {
                 if (this.touchOriginX === null || this.touchStartX === null) return;
@@ -174,15 +221,8 @@ export class Game {
             this.touchOriginX = null;
             this.touchStartX = null;
         };
-        document.addEventListener("touchend", clearTouch);
-        document.addEventListener("touchcancel", clearTouch);
-
-        window.addEventListener("keydown", (e) => this.onKeyDown(e));
-        window.addEventListener("keyup", (e) => {
-            if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
-                this.keys[e.code] = false;
-            }
-        });
+        canvas.addEventListener("touchend", clearTouch);
+        canvas.addEventListener("touchcancel", clearTouch);
     }
 
     onKeyDown(e) {
@@ -218,6 +258,12 @@ export class Game {
     setPaused(paused) {
         this.paused = paused;
         this.ui.setPaused(paused, this.helpOpen);
+        if (paused) {
+            this.keys.ArrowLeft = false;
+            this.keys.ArrowRight = false;
+            this.ui.els.moveLeft.classList.remove("active");
+            this.ui.els.moveRight.classList.remove("active");
+        }
 
         if (this.isQuiz) {
             if (paused) this.pauseQuizTimer();
@@ -232,7 +278,12 @@ export class Game {
         this.helpOpen = true;
         this.clearQuizTimer();
         this.setPaused(true);
-        this.ui.syncSettingsForm(this.modeId, this.difficultyId, this.cheatsEnabled);
+        this.ui.syncSettingsForm(
+            this.modeId,
+            this.difficultyId,
+            this.cheatsEnabled,
+            this.onScreenControls
+        );
         this.ui.openHelp();
     }
 
@@ -245,13 +296,20 @@ export class Game {
             const nextMode = this.ui.getSelectedMode();
             const nextDifficulty = this.ui.getSelectedDifficulty();
             const nextCheats = this.ui.getSelectedCheats();
+            const nextControls = this.ui.getSelectedOnScreenControls();
             const changed =
                 nextMode !== this.modeId || nextDifficulty !== this.difficultyId;
             this.modeId = nextMode;
             this.difficultyId = nextDifficulty;
             this.difficulty = DIFFICULTIES[this.difficultyId];
             this.cheatsEnabled = nextCheats;
-            this.ui.persistSettings(this.modeId, this.difficultyId, this.cheatsEnabled);
+            this.onScreenControls = nextControls;
+            this.ui.persistSettings(
+                this.modeId,
+                this.difficultyId,
+                this.cheatsEnabled,
+                this.onScreenControls
+            );
 
             if (changed) {
                 this.resetRun();
@@ -295,10 +353,12 @@ export class Game {
     }
 
     resize() {
-        this.canvas.width = window.innerWidth;
-        this.canvas.height = window.innerHeight;
+        const viewport = window.visualViewport;
+        this.canvas.width = Math.floor(viewport?.width ?? window.innerWidth);
+        this.canvas.height = Math.floor(viewport?.height ?? window.innerHeight);
         this.refreshObstacleCap();
         this.clampPlayer();
+        syncHeaderOffset();
         this.drawFrame(0, true);
     }
 

@@ -4,9 +4,17 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-    <meta name="description" content="A simple javascript game to play with 4-bit BCD/binary-numbers">
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
+    <meta name="description" content="Practice 4-bit binary numbers (0–15) with Classic, Reverse, and Quiz modes.">
     <meta name="theme-color" content="#0e8225">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Feed Base-2">
+    <meta name="application-name" content="Feed Base-2">
+    <link rel="manifest" href="./manifest.webmanifest">
+    <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
     <title>Feed Base-2</title>
     <link rel="stylesheet" href="./style.css" />
     <script type="module" src="./js/main.js"></script>
@@ -75,16 +83,15 @@
                     <path d="M96 448h106.7V64H96v384zM309.3 64v384H416V64H309.3z"></path>
                 </svg>
             </button>
-            <button class="button" id="help-open" title="About this game" type="button" aria-label="About this game">
+            <button class="button" id="help-open" title="Settings" type="button" aria-label="Settings">
                 <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 24 24" height="1em"
                     width="1em" aria-hidden="true">
-                    <path fill="none" d="M0 0h24v24H0V0z"></path>
                     <path
-                        d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z">
+                        d="M19.14 12.94c.04-.31.06-.63.06-.94s-.02-.63-.06-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.49.49 0 0 0-.59-.22l-2.39.96a7.2 7.2 0 0 0-1.62-.94l-.36-2.54A.48.48 0 0 0 14 2h-4a.48.48 0 0 0-.48.42l-.36 2.54c-.59.24-1.13.55-1.62.94l-2.39-.96a.49.49 0 0 0-.59.22L2.25 8.87a.48.48 0 0 0 .12.61l2.03 1.58c-.04.31-.06.63-.06.94s.02.63.06.94L2.37 14.52a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.3.59.22l2.39-.96c.5.39 1.03.7 1.62.94l.36 2.54c.05.24.24.42.48.42h4c.24 0 .44-.18.48-.42l.36-2.54c.59-.24 1.13-.55 1.62-.94l2.39.96c.22.08.47 0 .59-.22l1.92-3.32a.49.49 0 0 0-.12-.61l-2.01-1.58zM12 15.6A3.6 3.6 0 1 1 12 8.4a3.6 3.6 0 0 1 0 7.2z">
                     </path>
                 </svg>
             </button>
-            <a class="button" href="https://github.com/huzaifa-99/feed-base-2" aria-label="Link to source code on github"
+            <a class="button github-link" href="https://github.com/huzaifa-99/feed-base-2" aria-label="Link to source code on github"
                 title="Link to source code on github">
                 <svg stroke="currentColor" fill="currentColor" stroke-width="0" viewBox="0 0 16 16" height="1em"
                     width="1em" aria-hidden="true">
@@ -102,8 +109,10 @@
     <div class="help-dialog" id="help-dialog" role="dialog" aria-modal="true" aria-labelledby="help-title">
         <div class="help-dialog-content">
             <div class="dialog-panel" id="settings-panel">
-                <h1 class="dialog-title" id="help-title">Feed Base-2</h1>
-                <p class="dialog-subtitle">4-bit binary practice · 0–15</p>
+                <div class="dialog-heading">
+                    <h1 class="dialog-title" id="help-title">Feed Base-2</h1>
+                    <p class="dialog-subtitle">4-bit binary · 0–15</p>
+                </div>
 
                 <div class="settings-block">
                     <span class="settings-label">Mode</span>
@@ -121,7 +130,7 @@
                             <span>Quiz</span>
                         </label>
                     </div>
-                    <p class="settings-hint" id="mode-hint">Find a decimal — catch its binary</p>
+                    <p class="settings-hint" id="mode-hint">Find a decimal - catch its binary</p>
                 </div>
 
                 <div class="settings-block">
@@ -142,56 +151,83 @@
                     </div>
                 </div>
 
-                <div class="settings-block cheats-block">
-                    <span class="settings-label">Cheats</span>
-                    <label class="cheats-toggle" for="cheats-toggle">
-                        <input type="checkbox" id="cheats-toggle" name="cheats">
-                        <span class="cheats-toggle-track" aria-hidden="true">
-                            <span class="cheats-toggle-thumb"></span>
-                        </span>
-                        <span class="cheats-toggle-copy">
-                            <span class="cheats-toggle-title">Show answers</span>
-                            <span class="cheats-toggle-desc">Reveal the match under Find</span>
-                        </span>
-                    </label>
+                <div class="settings-block">
+                    <span class="settings-label">Options</span>
+                    <div class="settings-toggles">
+                        <label class="setting-toggle" for="cheats-toggle">
+                            <input type="checkbox" id="cheats-toggle" name="cheats">
+                            <span class="setting-toggle-track" aria-hidden="true">
+                                <span class="setting-toggle-thumb"></span>
+                            </span>
+                            <span class="setting-toggle-copy">
+                                <span class="setting-toggle-title">Show answers</span>
+                            </span>
+                        </label>
+                        <label class="setting-toggle" for="controls-toggle">
+                            <input type="checkbox" id="controls-toggle" name="onscreen-controls">
+                            <span class="setting-toggle-track" aria-hidden="true">
+                                <span class="setting-toggle-thumb"></span>
+                            </span>
+                            <span class="setting-toggle-copy">
+                                <span class="setting-toggle-title">On-screen arrows</span>
+                            </span>
+                        </label>
+                    </div>
                 </div>
 
-                <button class="button btn-primary btn-lg mx-auto" id="help-close" type="button">
-                    Play
-                </button>
-                <button class="button btn-link mx-auto" id="howto-open" type="button">
-                    How to play
-                </button>
+                <div class="dialog-actions">
+                    <button class="button btn-primary btn-lg" id="help-close" type="button">
+                        Play
+                    </button>
+                    <button class="button btn-link" id="howto-open" type="button">
+                        How to play
+                    </button>
+                </div>
             </div>
 
             <div class="dialog-panel hidden" id="howto-panel">
-                <h2 class="dialog-title">How to play</h2>
-                <p class="dialog-subtitle">
-                    Decimals 0–15 as 4-bit binary
-                    (<a aria-label="Link to image with decimal to binary conversions"
-                        href="./assets/images/binaryConversion.png"
-                        title="Binary conversions chart">chart</a>
-                </p>
+                <div class="dialog-heading">
+                    <h2 class="dialog-title">How to play</h2>
+                    <p class="dialog-subtitle">
+                        0–15 as 4-bit binary
+                        (<a aria-label="Link to image with decimal to binary conversions"
+                            href="./assets/images/binaryConversion.png"
+                            title="Binary conversions chart">chart</a>
+                    </p>
+                </div>
                 <ul class="howto-list">
-                    <li>Classic: find a decimal, catch its binary</li>
-                    <li>Reverse: find a binary, catch its decimal</li>
-                    <li>Quiz: pick the matching binary from the choices</li>
-                    <li>Correct answers score points and build a streak</li>
-                    <li>Misses show the conversion and reset the streak</li>
-                    <li>Classic / Reverse: arrows or drag to move</li>
-                    <li>Space pauses in all modes · Esc opens settings</li>
-                    <li>Quiz Hard adds a countdown timer</li>
+                    <li>Classic: catch the binary for a decimal</li>
+                    <li>Reverse: catch the decimal for a binary</li>
+                    <li>Quiz: tap the matching binary</li>
+                    <li>Streaks boost score · misses teach the conversion</li>
+                    <li>Move with arrows, drag, or on-screen pads</li>
+                    <li>Header: pause, mute, share, settings</li>
                 </ul>
-                <button class="button btn-primary btn-lg mx-auto" id="howto-back" type="button">
-                    Back
-                </button>
+                <div class="dialog-actions">
+                    <button class="button btn-primary btn-lg" id="howto-back" type="button">
+                        Back
+                    </button>
+                </div>
             </div>
         </div>
     </div>
 
     <div class="pause-overlay hidden" id="pause-overlay" aria-hidden="true">
         <span class="pause-title">Paused</span>
-        <span class="pause-hint">Space or tap Play to resume</span>
+        <span class="pause-hint">Tap Play to resume</span>
+    </div>
+
+    <div class="move-controls hidden" id="move-controls" aria-label="Move controls">
+        <button type="button" class="move-btn" id="move-left" aria-label="Move left">
+            <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="currentColor">
+                <path d="M15.41 7.41 14 6l-6 6 6 6 1.41-1.41L10.83 12z"></path>
+            </svg>
+        </button>
+        <button type="button" class="move-btn" id="move-right" aria-label="Move right">
+            <svg viewBox="0 0 24 24" width="1em" height="1em" aria-hidden="true" fill="currentColor">
+                <path d="M10 6 8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z"></path>
+            </svg>
+        </button>
     </div>
 
     <div class="quiz-panel hidden" id="quiz-panel" aria-label="Quiz choices">
