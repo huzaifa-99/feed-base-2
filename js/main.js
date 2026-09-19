@@ -10,12 +10,38 @@ function registerServiceWorker() {
     });
 }
 
-syncHeaderOffset();
-window.addEventListener("resize", syncHeaderOffset);
-window.visualViewport?.addEventListener("resize", syncHeaderOffset);
-window.visualViewport?.addEventListener("scroll", syncHeaderOffset);
+function revealApp() {
+    const root = document.documentElement;
+    root.classList.remove("booting");
+    root.classList.add("is-ready");
+}
 
-const game = new Game();
-game.start();
-requestAnimationFrame(syncHeaderOffset);
-registerServiceWorker();
+async function boot() {
+    syncHeaderOffset();
+    window.addEventListener("resize", syncHeaderOffset);
+    window.visualViewport?.addEventListener("resize", syncHeaderOffset);
+    window.visualViewport?.addEventListener("scroll", syncHeaderOffset);
+
+    const game = new Game();
+    game.start();
+    requestAnimationFrame(syncHeaderOffset);
+
+    try {
+        if (document.fonts?.ready) {
+            await Promise.race([
+                document.fonts.ready,
+                new Promise((resolve) => setTimeout(resolve, 800)),
+            ]);
+        }
+    } catch {
+        /* ignore font wait failures */
+    }
+
+    requestAnimationFrame(() => {
+        requestAnimationFrame(revealApp);
+    });
+
+    registerServiceWorker();
+}
+
+boot();

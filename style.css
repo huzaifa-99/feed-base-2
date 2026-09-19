@@ -230,6 +230,27 @@ header {
     overflow: hidden;
 }
 
+html.is-ready .help-dialog-content {
+    animation: boot-rise 420ms ease both;
+}
+
+@keyframes boot-rise {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.is-ready .help-dialog-content {
+        animation: none;
+    }
+}
+
 .pause-overlay {
     position: fixed;
     inset: 0;
