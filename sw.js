@@ -17,6 +17,7 @@ const PRECACHE = [
     "./js/game.js",
     "./js/ui.js",
     "./js/modes.js",
+    "./js/appearance.js",
     "./js/constants.js",
     "./js/utils.js",
     "./js/sound.js",
@@ -25,7 +26,7 @@ const PRECACHE = [
     "./js/draw.js",
 ];
 
-const CACHE_NAME = "feed-base-2-v2";
+const CACHE_NAME = "feed-base-2-v3";
 
 self.addEventListener("install", (event) => {
     event.waitUntil(

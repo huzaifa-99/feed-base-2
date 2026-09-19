@@ -33,6 +33,6 @@ export function drawRoundRect(ctx, x, y, width, height, radius, fill, stroke) {
     ctx.quadraticCurveTo(x, y, x + cornerRadius.upperLeft, y);
     ctx.closePath();
 
-    if (stroke) ctx.stroke();
     if (fill) ctx.fill();
+    if (stroke) ctx.stroke();
 }

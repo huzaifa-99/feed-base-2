@@ -5,6 +5,12 @@ import {
     SCORE_STEP,
     SOUND_KEY,
 } from "./constants.js";
+import {
+    BLOCK_LOOKS,
+    BLOCK_SIZES,
+    loadBlockLook,
+    loadBlockSize,
+} from "./appearance.js";
 import { GameComponent } from "./game-component.js";
 import {
     DIFFICULTIES,
@@ -39,6 +45,8 @@ export class Game {
         this.difficulty = DIFFICULTIES[this.difficultyId];
         this.cheatsEnabled = loadCheats();
         this.onScreenControls = loadOnScreenControls();
+        this.blockSizeId = loadBlockSize();
+        this.blockLookId = loadBlockLook();
 
         this.score = 0;
         this.highScore = this.ui.loadHighScore(this.modeId, this.difficultyId);
@@ -66,15 +74,19 @@ export class Game {
 
         this.player = new GameComponent({
             context: this.ctx,
-            width: 50,
-            height: 40,
             text: "mem",
-            color: COLORS.blackColor,
-            bgColor: COLORS.primaryColor,
             xPos: 0,
-            xPadding: 10,
             yPos: 0,
         });
+        this.applyBlockStyle(this.player, "player");
+    }
+
+    get blockSize() {
+        return BLOCK_SIZES[this.blockSizeId] || BLOCK_SIZES.compact;
+    }
+
+    get blockLook() {
+        return BLOCK_LOOKS[this.blockLookId] || BLOCK_LOOKS.classic;
     }
 
     get isQuiz() {
@@ -85,13 +97,48 @@ export class Game {
         return this.modeId === "reverse";
     }
 
+    applyBlockStyle(component, role) {
+        const size = this.blockSize;
+        const look = this.blockLook[role];
+        component.color = look.text;
+        component.bgColor = look.fill;
+        component.borderColor = look.border;
+        component.borderWidth = look.borderWidth;
+        component.shadow = look.shadow;
+        const sizeRounding =
+            role === "player" ? size.playerRounding : size.dropRounding;
+        component.rounding =
+            look.rounding != null ? look.rounding : sizeRounding;
+        if (role === "player") {
+            component.padX = size.playerPadX;
+            component.padY = size.playerPadY;
+        } else {
+            component.padX = size.dropPadX;
+            component.padY = size.dropPadY;
+        }
+    }
+
+    playerFont() {
+        return `${this.blockSize.playerFont}px ${FONT.family}`;
+    }
+
+    dropFont() {
+        return `${this.blockSize.dropFont}px ${FONT.family}`;
+    }
+
+    settingsPayload() {
+        return {
+            modeId: this.modeId,
+            difficultyId: this.difficultyId,
+            cheatsEnabled: this.cheatsEnabled,
+            onScreenControls: this.onScreenControls,
+            blockSizeId: this.blockSizeId,
+            blockLookId: this.blockLookId,
+        };
+    }
+
     start() {
-        this.ui.syncSettingsForm(
-            this.modeId,
-            this.difficultyId,
-            this.cheatsEnabled,
-            this.onScreenControls
-        );
+        this.ui.syncSettingsForm(this.settingsPayload());
         this.applyPresentation();
         this.ui.setScore(this.score);
         this.ui.setHighScore(this.highScore, this.modeId, this.difficultyId);
@@ -99,8 +146,9 @@ export class Game {
         this.ui.syncSound(this.soundEnabled);
 
         this.resize();
-        this.player.xPos =
-            (this.canvas.width - this.player.width - this.player.xPadding) / 2;
+        this.ctx.font = this.playerFont();
+        this.player.measure();
+        this.player.xPos = (this.canvas.width - this.player.width) / 2;
         this.clampPlayer();
         this.drawFrame(0, true);
 
@@ -278,12 +326,7 @@ export class Game {
         this.helpOpen = true;
         this.clearQuizTimer();
         this.setPaused(true);
-        this.ui.syncSettingsForm(
-            this.modeId,
-            this.difficultyId,
-            this.cheatsEnabled,
-            this.onScreenControls
-        );
+        this.ui.syncSettingsForm(this.settingsPayload());
         this.ui.openHelp();
     }
 
@@ -297,21 +340,29 @@ export class Game {
             const nextDifficulty = this.ui.getSelectedDifficulty();
             const nextCheats = this.ui.getSelectedCheats();
             const nextControls = this.ui.getSelectedOnScreenControls();
-            const changed =
+            const nextSize = this.ui.getSelectedBlockSize();
+            const nextLook = this.ui.getSelectedBlockLook();
+            const modeChanged =
                 nextMode !== this.modeId || nextDifficulty !== this.difficultyId;
+            const appearanceChanged =
+                nextSize !== this.blockSizeId || nextLook !== this.blockLookId;
+
             this.modeId = nextMode;
             this.difficultyId = nextDifficulty;
             this.difficulty = DIFFICULTIES[this.difficultyId];
             this.cheatsEnabled = nextCheats;
             this.onScreenControls = nextControls;
-            this.ui.persistSettings(
-                this.modeId,
-                this.difficultyId,
-                this.cheatsEnabled,
-                this.onScreenControls
-            );
+            this.blockSizeId = nextSize;
+            this.blockLookId = nextLook;
+            this.ui.persistSettings(this.settingsPayload());
 
-            if (changed) {
+            if (appearanceChanged) {
+                this.applyBlockStyle(this.player, "player");
+                this.obstacles = [];
+                this.clampPlayer();
+            }
+
+            if (modeChanged) {
                 this.resetRun();
             } else {
                 this.applyPresentation();
@@ -347,9 +398,11 @@ export class Game {
     }
 
     clampPlayer() {
-        const maxX = this.canvas.width - this.player.width - this.player.xPadding;
+        this.ctx.font = this.playerFont();
+        this.player.measure();
+        const maxX = Math.max(0, this.canvas.width - this.player.width);
         this.player.xPos = clamp(this.player.xPos, 0, maxX);
-        this.player.yPos = this.canvas.height - this.player.height - 10;
+        this.player.yPos = this.canvas.height - this.player.height - 12;
     }
 
     resize() {
@@ -406,20 +459,16 @@ export class Game {
             const obstacle = new GameComponent({
                 context: this.ctx,
                 text,
-                color: COLORS.primaryColor,
-                bgColor: COLORS.blackColor,
                 xPos: 0,
-                xPadding: 8,
                 yPos: getRandomYPos(),
                 moveSpeed: getRandomSpeed(this.speedForScore()),
-                rounding: 5,
             });
+            this.applyBlockStyle(obstacle, "drop");
             obstacle.value = value;
 
-            this.ctx.font = `${FONT.small} ${FONT.family}`;
-            obstacle.width = Math.ceil(this.ctx.measureText(text).width);
-            obstacle.height = 18;
-            obstacle.xPos = this.randomX(obstacle.width + obstacle.xPadding);
+            this.ctx.font = this.dropFont();
+            obstacle.measure();
+            obstacle.xPos = this.randomX(obstacle.width);
             this.obstacles.push(obstacle);
         }
     }
@@ -593,8 +642,7 @@ export class Game {
             this.particles.update(deltaSeconds);
         }
 
-        ctx.font = `${FONT.large} ${FONT.family}`;
-        ctx.fillStyle = player.bgColor;
+        ctx.font = this.playerFont();
         player.render();
 
         if (!this.paused) {
@@ -609,7 +657,7 @@ export class Game {
             this.obstacles = remaining;
             this.spawnObstacles();
 
-            ctx.font = `${FONT.small} ${FONT.family}`;
+            ctx.font = this.dropFont();
             for (const obstacle of this.obstacles) {
                 obstacle.yPos += obstacle.moveSpeed * deltaSeconds;
                 obstacle.render();
@@ -618,7 +666,7 @@ export class Game {
                 (o) => o.yPos < canvas.height
             );
         } else {
-            ctx.font = `${FONT.small} ${FONT.family}`;
+            ctx.font = this.dropFont();
             for (const obstacle of this.obstacles) {
                 obstacle.render();
             }

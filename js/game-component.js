@@ -8,8 +8,12 @@ export class GameComponent {
         text,
         color,
         bgColor,
+        borderColor,
+        borderWidth,
+        shadow,
         xPos,
-        xPadding,
+        padX,
+        padY,
         yPos,
         moveSpeed,
         rounding,
@@ -21,8 +25,14 @@ export class GameComponent {
         this.text = text;
         this.color = color;
         this.bgColor = bgColor;
+        this.borderColor = borderColor || null;
+        this.borderWidth = borderWidth || 0;
+        this.shadow = Boolean(shadow);
         this.xPos = xPos;
-        this.xPadding = xPadding || 0;
+        this.padX = padX ?? 0;
+        this.padY = padY ?? 0;
+        // legacy alias used by older clamp math
+        this.xPadding = 0;
         this.yPos = yPos;
         this.moveSpeed = moveSpeed || 0;
         this.rounding = rounding || 0;
@@ -31,7 +41,7 @@ export class GameComponent {
     get bounds() {
         return {
             left: this.xPos,
-            right: this.xPos + this.width + this.xPadding,
+            right: this.xPos + this.width,
             top: this.yPos,
             bottom: this.yPos + this.height,
         };
@@ -39,54 +49,73 @@ export class GameComponent {
 
     get center() {
         return {
-            x: this.xPos + (this.width + this.xPadding) / 2,
+            x: this.xPos + this.width / 2,
             y: this.yPos + this.height / 2,
         };
     }
 
-    render() {
-        if (this.text) {
-            const textInfo = this.context.measureText(this.text);
-            const fontSize = parseFloat(this.context.font) || 10;
+    measure() {
+        if (!this.text) return;
+        const textInfo = this.context.measureText(this.text);
+        const fontSize = parseFloat(this.context.font) || 10;
+        this.width = Math.ceil(textInfo.width + this.padX * 2);
+        this.height = Math.ceil(fontSize + this.padY * 2);
+    }
 
-            this.width = Math.floor(Math.max(this.width, textInfo.width));
-            this.height = Math.floor(Math.max(this.height, fontSize));
-            this.context.fillStyle = this.bgColor;
+    render() {
+        this.measure();
+        const ctx = this.context;
+        const radius = Math.min(this.rounding, this.height / 2, this.width / 2);
+
+        if (this.shadow) {
+            ctx.save();
+            ctx.shadowColor = "rgba(0, 0, 0, 0.45)";
+            ctx.shadowBlur = 10;
+            ctx.shadowOffsetY = 3;
         }
 
-        if (this.rounding > 0) {
+        ctx.fillStyle = this.bgColor;
+        ctx.strokeStyle = this.borderColor || this.bgColor;
+        ctx.lineWidth = this.borderWidth;
+
+        if (radius > 0) {
             drawRoundRect(
-                this.context,
+                ctx,
                 this.xPos,
                 this.yPos,
-                this.width + this.xPadding,
+                this.width,
                 this.height,
                 {
-                    upperLeft: this.rounding,
-                    upperRight: this.rounding,
-                    lowerLeft: this.rounding,
-                    lowerRight: this.rounding,
+                    upperLeft: radius,
+                    upperRight: radius,
+                    lowerLeft: radius,
+                    lowerRight: radius,
                 },
                 true,
-                true
+                this.borderWidth > 0
             );
         } else {
-            this.context.fillRect(
-                this.xPos,
-                this.yPos,
-                this.width + this.xPadding,
-                this.height
-            );
+            ctx.fillRect(this.xPos, this.yPos, this.width, this.height);
+            if (this.borderWidth > 0) {
+                ctx.strokeRect(
+                    this.xPos + this.borderWidth / 2,
+                    this.yPos + this.borderWidth / 2,
+                    this.width - this.borderWidth,
+                    this.height - this.borderWidth
+                );
+            }
         }
 
+        if (this.shadow) ctx.restore();
+
         if (this.text) {
-            this.context.fillStyle = this.color;
-            this.context.textAlign = "center";
-            this.context.textBaseline = "middle";
-            this.context.fillText(
+            ctx.fillStyle = this.color;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText(
                 this.text,
-                this.xPos + (this.width + this.xPadding) / 2,
-                this.yPos + this.height / 2
+                this.xPos + this.width / 2,
+                this.yPos + this.height / 2 + 1
             );
         }
     }

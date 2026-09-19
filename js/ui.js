@@ -1,5 +1,11 @@
 import { SOUND_KEY, TOAST_MS } from "./constants.js";
 import {
+    BLOCK_LOOK_KEY,
+    BLOCK_LOOKS,
+    BLOCK_SIZE_KEY,
+    BLOCK_SIZES,
+} from "./appearance.js";
+import {
     DIFFICULTIES,
     DIFFICULTY_KEY,
     CHEATS_KEY,
@@ -59,6 +65,12 @@ export function bindUi() {
         difficultyInputs: [
             ...document.querySelectorAll('input[name="difficulty"]'),
         ],
+        blockSizeInputs: [
+            ...document.querySelectorAll('input[name="block-size"]'),
+        ],
+        blockLookInputs: [
+            ...document.querySelectorAll('input[name="block-look"]'),
+        ],
     };
 }
 
@@ -86,12 +98,37 @@ export class GameUi {
         return Boolean(this.els.controlsToggle?.checked);
     }
 
-    syncSettingsForm(modeId, difficultyId, cheatsEnabled, onScreenControls) {
+    getSelectedBlockSize() {
+        const checked = this.els.blockSizeInputs.find((input) => input.checked);
+        const value = checked?.value || "compact";
+        return BLOCK_SIZES[value] ? value : "compact";
+    }
+
+    getSelectedBlockLook() {
+        const checked = this.els.blockLookInputs.find((input) => input.checked);
+        const value = checked?.value || "classic";
+        return BLOCK_LOOKS[value] ? value : "classic";
+    }
+
+    syncSettingsForm({
+        modeId,
+        difficultyId,
+        cheatsEnabled,
+        onScreenControls,
+        blockSizeId,
+        blockLookId,
+    }) {
         for (const input of this.els.modeInputs) {
             input.checked = input.value === modeId;
         }
         for (const input of this.els.difficultyInputs) {
             input.checked = input.value === difficultyId;
+        }
+        for (const input of this.els.blockSizeInputs) {
+            input.checked = input.value === blockSizeId;
+        }
+        for (const input of this.els.blockLookInputs) {
+            input.checked = input.value === blockLookId;
         }
         if (this.els.cheatsToggle) {
             this.els.cheatsToggle.checked = Boolean(cheatsEnabled);
@@ -107,11 +144,20 @@ export class GameUi {
         this.els.modeHint.textContent = mode.blurb;
     }
 
-    persistSettings(modeId, difficultyId, cheatsEnabled, onScreenControls) {
+    persistSettings({
+        modeId,
+        difficultyId,
+        cheatsEnabled,
+        onScreenControls,
+        blockSizeId,
+        blockLookId,
+    }) {
         localStorage.setItem(MODE_KEY, modeId);
         localStorage.setItem(DIFFICULTY_KEY, difficultyId);
         localStorage.setItem(CHEATS_KEY, cheatsEnabled ? "on" : "off");
         localStorage.setItem(CONTROLS_KEY, onScreenControls ? "on" : "off");
+        localStorage.setItem(BLOCK_SIZE_KEY, blockSizeId);
+        localStorage.setItem(BLOCK_LOOK_KEY, blockLookId);
     }
 
     setScore(score) {

@@ -320,7 +320,7 @@ header {
 
 .dialog-title {
     margin: 0;
-    font-size: 1.25rem;
+    font-size: 1.5rem;
     font-weight: 700;
     text-align: center;
     line-height: 1.2;
@@ -400,6 +400,19 @@ header {
     justify-content: center;
     gap: 6px;
     width: 100%;
+}
+
+.option-row + .option-row {
+    margin-top: 2px;
+}
+
+.option-row-wrap {
+    flex-wrap: wrap;
+}
+
+.option-row-wrap .option-chip {
+    flex: 1 1 calc(33.333% - 4px);
+    min-width: 4.5rem;
 }
 
 .option-chip {
@@ -757,7 +770,7 @@ body.is-paused .move-controls {
     }
 
     .dialog-title {
-        font-size: 1.4rem;
+        font-size: 1.65rem;
     }
 
     .setting-toggle-title {
@@ -802,7 +815,7 @@ body.is-paused .move-controls {
     }
 
     .dialog-title {
-        font-size: 1.1rem;
+        font-size: 1.3rem;
     }
 
     .option-chip span {
