@@ -1,14 +1,15 @@
 {
   "name": "Feed Base-2",
   "short_name": "Feed Base-2",
-  "description": "Practice 4-bit binary numbers (0–15) with Classic, Reverse, and Quiz modes.",
-  "start_url": "./index.html",
+  "description": "Free browser game to practice 4-bit binary and decimal conversion (0–15). Classic, Reverse, and Quiz modes — works on mobile and installs as a PWA.",
+  "start_url": "./",
   "scope": "./",
   "display": "standalone",
   "orientation": "any",
   "background_color": "#1a1717",
   "theme_color": "#0e8225",
   "lang": "en",
+  "categories": ["games", "education"],
   "icons": [
     {
       "src": "./assets/icons/icon-192.png",

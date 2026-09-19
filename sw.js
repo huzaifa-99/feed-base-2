@@ -1,9 +1,10 @@
-const CACHE_NAME = "feed-base-2-v1";
 const PRECACHE = [
     "./",
     "./index.html",
     "./style.css",
     "./manifest.webmanifest",
+    "./robots.txt",
+    "./sitemap.xml",
     "./assets/icons/icon-192.png",
     "./assets/icons/icon-512.png",
     "./assets/icons/icon-maskable-512.png",
@@ -23,6 +24,8 @@ const PRECACHE = [
     "./js/game-component.js",
     "./js/draw.js",
 ];
+
+const CACHE_NAME = "feed-base-2-v2";
 
 self.addEventListener("install", (event) => {
     event.waitUntil(

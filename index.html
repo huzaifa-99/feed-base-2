@@ -5,8 +5,34 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1, user-scalable=no">
-    <meta name="description" content="Practice 4-bit binary numbers (0–15) with Classic, Reverse, and Quiz modes.">
+    <title>Feed Base-2 — Practice 4-bit Binary Numbers (0–15)</title>
+    <meta name="description" content="Free browser game to practice 4-bit binary and decimal conversion (0–15). Play Classic, Reverse, or Quiz modes with difficulty levels — works on mobile and installs as a PWA.">
+    <meta name="keywords" content="binary game, 4-bit binary, binary to decimal, learn binary, binary quiz, computer science game, BCD, base-2">
+    <meta name="author" content="Huzaifa Rasheed">
+    <meta name="robots" content="index, follow">
     <meta name="theme-color" content="#0e8225">
+    <meta name="color-scheme" content="dark">
+    <link rel="canonical" href="https://feedbase2.rhuzaifa.com/">
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Feed Base-2">
+    <meta property="og:locale" content="en_US">
+    <meta property="og:url" content="https://feedbase2.rhuzaifa.com/">
+    <meta property="og:title" content="Feed Base-2 — Practice 4-bit Binary Numbers">
+    <meta property="og:description" content="Catch binary for decimals 0–15. Classic, Reverse, and Quiz modes with streaks, cheats, and mobile controls.">
+    <meta property="og:image" content="https://feedbase2.rhuzaifa.com/assets/icons/icon-512.png">
+    <meta property="og:image:width" content="512">
+    <meta property="og:image:height" content="512">
+    <meta property="og:image:alt" content="Feed Base-2 app icon">
+
+    <!-- Twitter -->
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Feed Base-2 — Practice 4-bit Binary Numbers">
+    <meta name="twitter:description" content="Free binary practice game for decimals 0–15. Classic, Reverse, and Quiz modes.">
+    <meta name="twitter:image" content="https://feedbase2.rhuzaifa.com/assets/icons/icon-512.png">
+
+    <!-- PWA / mobile -->
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -14,13 +40,67 @@
     <meta name="application-name" content="Feed Base-2">
     <link rel="manifest" href="./manifest.webmanifest">
     <link rel="icon" type="image/png" sizes="192x192" href="./assets/icons/icon-192.png">
+    <link rel="icon" type="image/png" sizes="512x512" href="./assets/icons/icon-512.png">
     <link rel="apple-touch-icon" href="./assets/icons/apple-touch-icon.png">
-    <title>Feed Base-2</title>
+
     <link rel="stylesheet" href="./style.css" />
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-7QE6N4586D"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-7QE6N4586D');
+    </script>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Feed Base-2",
+      "alternateName": "Feed Base 2",
+      "url": "https://feedbase2.rhuzaifa.com/",
+      "description": "Free browser game to practice 4-bit binary and decimal conversion for numbers 0–15, with Classic, Reverse, and Quiz modes.",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Any",
+      "browserRequirements": "Requires JavaScript",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Person",
+        "name": "Huzaifa Rasheed",
+        "url": "https://github.com/huzaifa-99"
+      },
+      "image": "https://feedbase2.rhuzaifa.com/assets/icons/icon-512.png",
+      "inLanguage": "en"
+    }
+    </script>
     <script type="module" src="./js/main.js"></script>
 </head>
 
 <body>
+    <!-- Crawlable summary for search engines (visually hidden) -->
+    <main class="seo-content">
+        <h1>Feed Base-2</h1>
+        <p>
+            Feed Base-2 is a free browser game for learning and practicing 4-bit binary numbers.
+            Convert between decimal values 0–15 and their binary forms (for example, 2 is 0010).
+        </p>
+        <p>
+            Choose Classic (catch binary), Reverse (catch decimal), or Quiz mode, then pick Easy,
+            Normal, or Hard difficulty. Track your score and streak, enable answer hints, and play
+            on mobile with on-screen controls. Install it as a progressive web app for offline play.
+        </p>
+        <p>
+            Binary conversion chart:
+            <a href="./assets/images/binaryConversion.png">decimal to binary reference image</a>.
+            Source code on
+            <a href="https://github.com/huzaifa-99/feed-base-2">GitHub</a>.
+        </p>
+    </main>
+
     <!-- header -->
     <header>
         <div class="section-left">
