@@ -103,8 +103,21 @@ header {
 
 .section-left {
     display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: center;
+    gap: 2px;
+}
+
+.score-row {
+    display: flex;
     align-items: center;
-    justify-content: left;
+    gap: 8px;
+}
+
+.high-score-row {
+    font-size: 0.75em;
+    opacity: 0.85;
 }
 
 .section-center {
@@ -134,6 +147,21 @@ header {
     width: 100%;
     height: 100vh;
     background-color: var(--green-200);
+    z-index: 20;
+}
+
+.pause-overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 10;
+    font-size: 2rem;
+    letter-spacing: 0.08em;
+    color: var(--white);
+    background-color: rgba(0, 0, 0, 0.35);
 }
 
 .help-dialog-content {

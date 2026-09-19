@@ -1,143 +1,80 @@
-// constants
-const DECIMAL_TO_BINARY = {
-    0: "0000",
-    1: "0001",
-    2: "0010",
-    3: "0011",
-    4: "0100",
-    5: "0101",
-    6: "0110",
-    7: "0111",
-    8: "1000",
-    9: "1001",
-    10: "1010",
-    11: "1011",
-    12: "1100",
-    13: "1101",
-    14: "1110",
-    15: "1111",
-};
-const BINARY_TO_DECIMAL = {
-    "0000": "0",
-    "0001": "1",
-    "0010": "2",
-    "0011": "3",
-    "0100": "4",
-    "0101": "5",
-    "0110": "6",
-    "0111": "7",
-    1000: "8",
-    1001: "9",
-    1010: "10",
-    1011: "11",
-    1100: "12",
-    1101: "13",
-    1110: "14",
-    1111: "15",
-};
 const COLORS = {
     primaryColor: "#0e8225",
     secondaryColor: "#1a1717",
     blackColor: "#000000",
     whiteColor: "#ffffff",
     grayColor: "#282b28",
+    hitCorrect: "#2ecc71",
+    hitWrong: "#c0392b",
 };
 const FONT = {
-    family: "Consolas",
-    unit: "pt",
-    large: "24pt",
-    small: "18pt",
+    family: "Inconsolata, monospace",
+    large: "24px",
+    small: "18px",
 };
-const MIN_SPEED = 2;
-const MAX_SPEED = 12;
-const PLAYER_SPEED = 40;
+const MIN_SPEED = 80; // px per second
+const MAX_SPEED = 280;
+const PLAYER_SPEED = 420; // px per second
+const SCORE_STEP = 10;
+const HIGH_SCORE_KEY = "feed-base-2-high-score";
 
-// helpers
-const getRandomBinary = () => DECIMAL_TO_BINARY[Math.floor(Math.random() * 16)];
-const getRandomXPos = () => Math.floor(Math.random() * window.innerWidth);
+const toBinary = (n) => n.toString(2).padStart(4, "0");
+const toDecimal = (binary) => parseInt(binary, 2);
+const getRandomBinary = () => toBinary(Math.floor(Math.random() * 16));
+const getRandomTarget = () => Math.floor(Math.random() * 16);
 const getRandomYPos = () => Math.floor(Math.random() * 20);
 const getRandomSpeed = () =>
-    Math.floor(Math.random() * (MIN_SPEED - MAX_SPEED)) + MAX_SPEED;
+    MIN_SPEED + Math.random() * (MAX_SPEED - MIN_SPEED);
 const getMaxObstaclesCount = (width) => {
     if (width < 640) return 6;
     if (width < 1024) return 12;
     return 24;
 };
+const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
 
 /**
- * Draws a rounded rectangle using the current state of the canvas.
- * If you omit the last three params, it will draw a rectangle
- * outline with a 5 pixel border radius
- * @param {Number} x The top left x coordinate
- * @param {Number} y The top left y coordinate
- * @param {Number} width The width of the rectangle
- * @param {Number} height The height of the rectangle
- * @param {Object} radius All corner radii. Defaults to 0,0,0,0;
- * @param {Boolean} fill Whether to fill the rectangle. Defaults to false.
- * @param {Boolean} stroke Whether to stroke the rectangle. Defaults to true.
+ * Draws a filled/stroked rounded rectangle.
  */
-CanvasRenderingContext2D.prototype.roundRect = function (
-    x,
-    y,
-    width,
-    height,
-    radius,
-    fill,
-    stroke
-) {
-    var cornerRadius = {
+function drawRoundRect(ctx, x, y, width, height, radius, fill, stroke) {
+    const cornerRadius = {
         upperLeft: 0,
         upperRight: 0,
         lowerLeft: 0,
         lowerRight: 0,
     };
-    if (typeof stroke == "undefined") {
+    if (typeof stroke === "undefined") {
         stroke = true;
     }
     if (typeof radius === "object") {
-        for (var side in radius) {
+        for (const side in radius) {
             cornerRadius[side] = radius[side];
         }
     }
 
-    this.beginPath();
-    this.moveTo(x + cornerRadius.upperLeft, y);
-    this.lineTo(x + width - cornerRadius.upperRight, y);
-    this.quadraticCurveTo(x + width, y, x + width, y + cornerRadius.upperRight);
-    this.lineTo(x + width, y + height - cornerRadius.lowerRight);
-    this.quadraticCurveTo(
+    ctx.beginPath();
+    ctx.moveTo(x + cornerRadius.upperLeft, y);
+    ctx.lineTo(x + width - cornerRadius.upperRight, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + cornerRadius.upperRight);
+    ctx.lineTo(x + width, y + height - cornerRadius.lowerRight);
+    ctx.quadraticCurveTo(
         x + width,
         y + height,
         x + width - cornerRadius.lowerRight,
         y + height
     );
-    this.lineTo(x + cornerRadius.lowerLeft, y + height);
-    this.quadraticCurveTo(x, y + height, x, y + height - cornerRadius.lowerLeft);
-    this.lineTo(x, y + cornerRadius.upperLeft);
-    this.quadraticCurveTo(x, y, x + cornerRadius.upperLeft, y);
-    this.closePath();
+    ctx.lineTo(x + cornerRadius.lowerLeft, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - cornerRadius.lowerLeft);
+    ctx.lineTo(x, y + cornerRadius.upperLeft);
+    ctx.quadraticCurveTo(x, y, x + cornerRadius.upperLeft, y);
+    ctx.closePath();
     if (stroke) {
-        this.stroke();
+        ctx.stroke();
     }
     if (fill) {
-        this.fill();
+        ctx.fill();
     }
-};
+}
 
-/**
- * Draws a game component on the canvas.
- * @param {Object} context The canvas context
- * @param {Number} width The width of the component
- * @param {Number} height The height of the component
- * @param {String} text The text string of the component
- * @param {String} color The text color of the component
- * @param {String} bgColor The background color of the component
- * @param {Number} xPos The top left x coordinate
- * @param {Number} xPadding Padding of component along x-axis
- * @param {Number} yPos The top left y coordinate
- * @param {Number} moveSpeed Movement speed of the component
- * @param {Number} rounding Border radius of the component
- */
 class GameComponent {
     constructor({
         context,
@@ -152,39 +89,43 @@ class GameComponent {
         moveSpeed,
         rounding,
     }) {
-        this.id = Math.floor(Math.random() * 2467853784559);
+        this.id = Math.random().toString(36).slice(2);
         this.context = context;
-        this.width = width;
-        this.height = height;
+        this.width = width || 0;
+        this.height = height || 0;
         this.text = text;
         this.color = color;
         this.bgColor = bgColor;
         this.xPos = xPos;
         this.xPadding = xPadding || 0;
         this.yPos = yPos;
-        this.moveSpeed = moveSpeed;
-        this.rounding = rounding;
+        this.moveSpeed = moveSpeed || 0;
+        this.rounding = rounding || 0;
+    }
+
+    get bounds() {
+        return {
+            left: this.xPos,
+            right: this.xPos + this.width + this.xPadding,
+            top: this.yPos,
+            bottom: this.yPos + this.height,
+        };
     }
 
     render() {
-        // make component with text
         if (this.text) {
-            // calc text dimensions
             const textInfo = this.context.measureText(this.text);
-            const height = this.context.font.match(/\d+/).pop() || 10;
+            const fontSize = parseFloat(this.context.font) || 10;
             const width = textInfo.width;
 
-            // set component dimensions
-            this.width = Math.floor(width < this.width ? this.width : width);
-            this.height = Math.floor(height < this.height ? this.height : height);
-
-            // set component background
+            this.width = Math.floor(Math.max(this.width, width));
+            this.height = Math.floor(Math.max(this.height, fontSize));
             this.context.fillStyle = this.bgColor;
         }
 
-        // make round corners
         if (this.rounding > 0) {
-            this.context.roundRect(
+            drawRoundRect(
+                this.context,
                 this.xPos,
                 this.yPos,
                 this.width + this.xPadding,
@@ -199,7 +140,6 @@ class GameComponent {
                 true
             );
         } else {
-            // make sharp corners
             this.context.fillRect(
                 this.xPos,
                 this.yPos,
@@ -208,10 +148,8 @@ class GameComponent {
             );
         }
 
-        // add text to component
         if (this.text) {
             this.context.fillStyle = this.color;
-            this.context.textBaseline = "top";
             this.context.textAlign = "center";
             this.context.textBaseline = "middle";
             this.context.fillText(
@@ -223,67 +161,42 @@ class GameComponent {
     }
 
     doesCrash(gameComponent) {
-        let hasCrashed = false;
-
-        const myCoordinates = {
-            left: this.xPos,
-            right: this.xPos + this.width,
-            top: this.yPos,
-            bottom: this.yPos + this.height,
-        };
-
-        const otherCoordinates = {
-            left: gameComponent.xPos,
-            right: gameComponent.xPos + gameComponent.width,
-            top: gameComponent.yPos,
-            bottom: gameComponent.yPos + gameComponent.height,
-        };
-
-        if (
-            ((otherCoordinates.left >= myCoordinates.left &&
-                otherCoordinates.left <= myCoordinates.right) ||
-                (otherCoordinates.right <= myCoordinates.right &&
-                    otherCoordinates.right >= myCoordinates.left)) &&
-            otherCoordinates.bottom >= myCoordinates.top &&
-            otherCoordinates.bottom <= myCoordinates.bottom
-        ) {
-            hasCrashed = true;
-        }
-
-        return hasCrashed;
+        const a = this.bounds;
+        const b = gameComponent.bounds;
+        return a.left < b.right && a.right > b.left && a.top < b.bottom && a.bottom > b.top;
     }
 }
 
-window.onload = function () {
-    const browserWidth = document.body.clientWidth;
+window.addEventListener("DOMContentLoaded", () => {
     let score = 0;
-    let target = Math.floor(Math.random() * 2467853784559).toString();
-    let currentTargetIndex = 0;
+    let highScore = Number(localStorage.getItem(HIGH_SCORE_KEY)) || 0;
+    let target = getRandomTarget();
     let paused = true;
-    let obstacles = [];
     let helpDialogIsOpen = true;
-    let maxObstacles = getMaxObstaclesCount(browserWidth);
-    let touchCoordinates = null;
-    let touchStartCoordinates = null;
+    let obstacles = [];
+    let maxObstacles = getMaxObstaclesCount(document.body.clientWidth);
+    let touchOriginX = null;
+    let touchStartX = null;
+    let lastFrameTime = 0;
+    let flashUntil = 0;
+    let flashColor = null;
+    const keys = {
+        ArrowLeft: false,
+        ArrowRight: false,
+    };
 
-    // get html elements
     const canvas = document.getElementById("game-canvas");
     const context = canvas.getContext("2d");
     const scoreContainer = document.getElementById("score");
+    const highScoreContainer = document.getElementById("high-score");
     const currentTargetContainer = document.getElementById("current-target");
     const playBtn = document.getElementById("play-btn");
     const pauseBtn = document.getElementById("pause-btn");
     const helpDialog = document.getElementById("help-dialog");
     const helpOpen = document.getElementById("help-open");
     const helpClose = document.getElementById("help-close");
+    const pauseOverlay = document.getElementById("pause-overlay");
 
-    // update ui
-    context.font = `${FONT.large} ${FONT.family}`;
-    currentTargetContainer.innerHTML = target[currentTargetIndex];
-    canvas.height = window.innerHeight;
-    canvas.width = window.innerWidth;
-
-    // add player to canvas
     const player = new GameComponent({
         context,
         width: 50,
@@ -291,175 +204,234 @@ window.onload = function () {
         text: "mem",
         color: COLORS.blackColor,
         bgColor: COLORS.primaryColor,
-        xPos: canvas.width / 2 - 75 / 2,
+        xPos: 0,
         xPadding: 10,
-        yPos: canvas.height - (40 + 10),
+        yPos: 0,
     });
-    player.render();
 
-    // attach event listeners
-    playBtn.classList.add("hidden");
-    playBtn.addEventListener("click", function () {
-        paused = false;
-        pauseBtn.classList.remove("hidden");
-        this.classList.add("hidden");
-    });
-    pauseBtn.addEventListener("click", function () {
-        paused = true;
-        playBtn.classList.remove("hidden");
-        this.classList.add("hidden");
-    });
-    helpClose.addEventListener("click", () => {
-        paused = false;
+    function playerMaxX() {
+        return canvas.width - player.width - player.xPadding;
+    }
+
+    function clampPlayer() {
+        player.xPos = clamp(player.xPos, 0, playerMaxX());
+        player.yPos = canvas.height - player.height - 10;
+    }
+
+    function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+        maxObstacles = getMaxObstaclesCount(canvas.width);
+        clampPlayer();
+        drawFrame(0, true);
+    }
+
+    function setPaused(nextPaused) {
+        paused = nextPaused;
+        playBtn.classList.toggle("hidden", !paused);
+        pauseBtn.classList.toggle("hidden", paused);
+        pauseOverlay.classList.toggle("hidden", !paused || helpDialogIsOpen);
+    }
+
+    function openHelp() {
+        helpDialogIsOpen = true;
+        setPaused(true);
+        helpDialog.classList.remove("hidden");
+        pauseOverlay.classList.add("hidden");
+    }
+
+    function closeHelp() {
         helpDialogIsOpen = false;
         helpDialog.classList.add("hidden");
-    });
-    helpOpen.addEventListener("click", () => {
-        paused = true;
-        helpDialogIsOpen = true;
-        helpDialog.classList.remove("hidden");
-    });
+        setPaused(false);
+    }
+
+    function updateScore(delta) {
+        score = Math.max(0, score + delta);
+        if (score > highScore) {
+            highScore = score;
+            localStorage.setItem(HIGH_SCORE_KEY, String(highScore));
+            highScoreContainer.textContent = highScore;
+        }
+        scoreContainer.textContent = score;
+    }
+
+    function setNewTarget() {
+        target = getRandomTarget();
+        currentTargetContainer.textContent = target;
+    }
+
+    function getRandomXPos(width) {
+        return Math.floor(Math.random() * Math.max(1, canvas.width - width));
+    }
+
+    function speedForScore() {
+        const boost = Math.min(score / 100, 2);
+        return 1 + boost * 0.35;
+    }
+
+    function spawnObstacles() {
+        const needed = maxObstacles - obstacles.length;
+        for (let i = 0; i < needed; i++) {
+            const binary = getRandomBinary();
+            const obstacle = new GameComponent({
+                context,
+                text: binary,
+                color: COLORS.primaryColor,
+                bgColor: COLORS.blackColor,
+                xPos: 0,
+                xPadding: 8,
+                yPos: getRandomYPos(),
+                moveSpeed: getRandomSpeed() * speedForScore(),
+                rounding: 5,
+            });
+            // Measure once so spawn X stays on-screen
+            context.font = `${FONT.small} ${FONT.family}`;
+            const measured = context.measureText(binary).width;
+            obstacle.width = Math.ceil(measured);
+            obstacle.height = 18;
+            obstacle.xPos = getRandomXPos(obstacle.width + obstacle.xPadding);
+            obstacles.push(obstacle);
+        }
+    }
+
+    function drawFrame(deltaSeconds, forceDraw = false) {
+        if (paused && !forceDraw) return;
+
+        context.clearRect(0, 0, canvas.width, canvas.height);
+
+        if (flashUntil > performance.now()) {
+            context.fillStyle = flashColor;
+            context.globalAlpha = 0.18;
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.globalAlpha = 1;
+        }
+
+        if (!paused) {
+            if (keys.ArrowLeft) player.xPos -= PLAYER_SPEED * deltaSeconds;
+            if (keys.ArrowRight) player.xPos += PLAYER_SPEED * deltaSeconds;
+            clampPlayer();
+        }
+
+        context.font = `${FONT.large} ${FONT.family}`;
+        context.fillStyle = player.bgColor;
+        player.render();
+
+        if (!paused) {
+            const remaining = [];
+            for (const obstacle of obstacles) {
+                if (player.doesCrash(obstacle)) {
+                    const decimal = toDecimal(obstacle.text);
+                    if (decimal === target) {
+                        updateScore(SCORE_STEP);
+                        setNewTarget();
+                        flashColor = COLORS.hitCorrect;
+                    } else {
+                        updateScore(-SCORE_STEP);
+                        flashColor = COLORS.hitWrong;
+                    }
+                    flashUntil = performance.now() + 180;
+                    continue;
+                }
+                remaining.push(obstacle);
+            }
+            obstacles = remaining;
+
+            spawnObstacles();
+
+            context.font = `${FONT.small} ${FONT.family}`;
+            for (const obstacle of obstacles) {
+                obstacle.yPos += obstacle.moveSpeed * deltaSeconds;
+                obstacle.render();
+            }
+
+            obstacles = obstacles.filter((o) => o.yPos < canvas.height);
+        } else {
+            context.font = `${FONT.small} ${FONT.family}`;
+            for (const obstacle of obstacles) {
+                obstacle.render();
+            }
+        }
+    }
+
+    function gameLoop(timestamp) {
+        if (!lastFrameTime) lastFrameTime = timestamp;
+        const deltaSeconds = Math.min((timestamp - lastFrameTime) / 1000, 0.05);
+        lastFrameTime = timestamp;
+        drawFrame(deltaSeconds);
+        requestAnimationFrame(gameLoop);
+    }
+
+    // Initial UI
+    context.font = `${FONT.large} ${FONT.family}`;
+    currentTargetContainer.textContent = target;
+    scoreContainer.textContent = score;
+    highScoreContainer.textContent = highScore;
+    resizeCanvas();
+    player.xPos = (canvas.width - player.width - player.xPadding) / 2;
+    clampPlayer();
+    drawFrame(0, true);
+    // Help starts open: paused, no pause overlay, Play visible
+    playBtn.classList.remove("hidden");
+    pauseBtn.classList.add("hidden");
+    pauseOverlay.classList.add("hidden");
+
+    playBtn.addEventListener("click", () => setPaused(false));
+    pauseBtn.addEventListener("click", () => setPaused(true));
+    helpClose.addEventListener("click", closeHelp);
+    helpOpen.addEventListener("click", openHelp);
+    window.addEventListener("resize", resizeCanvas);
+
     document.addEventListener(
         "touchstart",
         (e) => {
-            touchCoordinates = player.xPos;
-            touchStartCoordinates = e.touches[0].clientX;
+            touchOriginX = player.xPos;
+            touchStartX = e.touches[0].clientX;
         },
-        true
+        { passive: true }
     );
     document.addEventListener(
         "touchmove",
         (e) => {
-            if (touchCoordinates && e.touches[0].clientX && touchStartCoordinates) {
-                player.xPos =
-                    touchCoordinates + (e.touches[0].clientX - touchStartCoordinates);
-            }
+            if (touchOriginX === null || touchStartX === null) return;
+            player.xPos = touchOriginX + (e.touches[0].clientX - touchStartX);
+            clampPlayer();
         },
-        true
+        { passive: true }
     );
-    document.addEventListener(
-        "touchend",
-        () => {
-            touchCoordinates = null;
-            touchStartCoordinates = null;
-        },
-        true
-    );
-    document.addEventListener(
-        "touchcancel",
-        () => {
-            touchCoordinates = null;
-            touchStartCoordinates = null;
-        },
-        true
-    );
+    const clearTouch = () => {
+        touchOriginX = null;
+        touchStartX = null;
+    };
+    document.addEventListener("touchend", clearTouch);
+    document.addEventListener("touchcancel", clearTouch);
+
     window.addEventListener("keydown", (e) => {
-        // ignore up/down arrow deys
-        if (["ArrowUp", "ArrowDown"].includes(e.code)) {
+        if (["ArrowUp", "ArrowDown", "Space"].includes(e.code)) {
             e.preventDefault();
         }
 
-        // open help dialog
-        if (e.code === "Escape") helpOpen.click();
+        if (e.code === "Escape") {
+            if (helpDialogIsOpen) closeHelp();
+            else openHelp();
+            return;
+        }
 
-        // play/pause the game
         if (e.code === "Space" && !helpDialogIsOpen) {
-            paused = !paused;
-            if (paused) {
-                playBtn.classList.remove("hidden");
-                pauseBtn.classList.add("hidden");
-            }
-            if (!paused) {
-                playBtn.classList.add("hidden");
-                pauseBtn.classList.remove("hidden");
-            }
+            setPaused(!paused);
+            return;
         }
 
-        // return if the game is paused
-        if (paused) return;
-
-        // change player position on x-axis
-        if (
-            e.code === "ArrowRight" &&
-            player.xPos <= window.innerWidth - player.width / 2
-        ) {
-            player.xPos += PLAYER_SPEED;
-        }
-        if (e.code === "ArrowLeft" && player.xPos >= 0) {
-            player.xPos -= PLAYER_SPEED;
+        if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+            keys[e.code] = true;
         }
     });
 
-    function refreshFrame() {
-        if (paused) return;
-
-        // clear canvas and apply styling
-        context.clearRect(0, 0, canvas.width, canvas.height);
-        context.font = `${FONT.large} ${FONT.family}`;
-
-        player.render();
-
-        // check if the player hits any obstacles
-        let _tempObstacles = [...obstacles];
-        _tempObstacles.map((x) => {
-            if (player.doesCrash(x)) {
-                // remove the hit target obstacle
-                obstacles = [...obstacles].filter((y) => y.id !== x.id);
-
-                // get decimal of hit obstacle binary
-                const decimal = BINARY_TO_DECIMAL[x.text];
-
-                if (decimal.toString() === target[currentTargetIndex]) {
-                    // increment score if the hit target was correct
-                    score += 10;
-
-                    // update target number if half target is complete
-                    if (currentTargetIndex > target.length / 2) {
-                        target = Math.floor(Math.random() * 2467853784559).toString();
-                        currentTargetIndex = 0;
-                    }
-
-                    // move to next target number
-                    currentTargetIndex += 1;
-                    currentTargetContainer.innerHTML = target[currentTargetIndex];
-                } else {
-                    score -= 10;
-                }
-
-                // update ui with score
-                scoreContainer.innerHTML = score;
-            }
-        });
-
-        // create obstacles
-        const requiredObstacles = maxObstacles - obstacles.length;
-        for (let i = 0; i < requiredObstacles; i++) {
-            obstacles.push(
-                new GameComponent({
-                    context,
-                    text: getRandomBinary(),
-                    color: COLORS.primaryColor,
-                    bgColor: COLORS.blackColor,
-                    xPos: getRandomXPos(),
-                    xPadding: 2,
-                    yPos: getRandomYPos(),
-                    moveSpeed: getRandomSpeed(),
-                    rounding: 5,
-                })
-            );
+    window.addEventListener("keyup", (e) => {
+        if (e.code === "ArrowLeft" || e.code === "ArrowRight") {
+            keys[e.code] = false;
         }
+    });
 
-        // move obstacles
-        context.font = `${FONT.small} ${FONT.family}`;
-        obstacles.map((x) => {
-            x.yPos += x.moveSpeed;
-            x.render();
-        });
-
-        // remove obstacles that are off canvas
-        obstacles = obstacles.filter((x) => x.yPos < canvas.height);
-    }
-
-    // game loop
-    setInterval(refreshFrame, 20);
-};
+    requestAnimationFrame(gameLoop);
+});
