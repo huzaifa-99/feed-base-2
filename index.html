@@ -319,12 +319,24 @@
                     </div>
                 </div>
 
-                <div class="dialog-actions">
+                <div class="dialog-actions" id="settings-actions">
                     <button class="button btn-primary btn-lg" id="help-close" type="button">
                         Play
                     </button>
+                    <button class="button hidden" id="settings-new-game-btn" type="button">
+                        Restart game
+                    </button>
                     <button class="button btn-link" id="howto-open" type="button">
                         How to play
+                    </button>
+                </div>
+                <div class="dialog-actions hidden" id="settings-confirm">
+                    <p class="settings-hint">Reset score and streak?</p>
+                    <button class="button btn-primary btn-lg" id="settings-new-game-confirm" type="button">
+                        Restart
+                    </button>
+                    <button class="button btn-link" id="settings-new-game-cancel" type="button">
+                        Cancel
                     </button>
                 </div>
             </div>
@@ -346,6 +358,7 @@
                     <li>Streaks boost score · misses teach the conversion</li>
                     <li>Move with arrows, drag, or on-screen pads</li>
                     <li>Header: pause, mute, share, settings</li>
+                    <li>Restart game (pause or settings) resets score and streak</li>
                 </ul>
                 <div class="dialog-actions">
                     <button class="button btn-primary btn-lg" id="howto-back" type="button">
@@ -358,7 +371,22 @@
 
     <div class="pause-overlay hidden" id="pause-overlay" aria-hidden="true">
         <span class="pause-title">Paused</span>
-        <span class="pause-hint">Tap Play to resume</span>
+        <span class="pause-hint" id="pause-hint">Tap Play to resume</span>
+        <div class="pause-actions" id="pause-actions">
+            <button class="button btn-primary" id="new-game-btn" type="button">
+                Restart game
+            </button>
+        </div>
+        <div class="pause-confirm hidden" id="pause-confirm">
+            <div class="pause-actions">
+                <button class="button" id="new-game-cancel" type="button">
+                    Cancel
+                </button>
+                <button class="button btn-primary" id="new-game-confirm" type="button">
+                    Restart
+                </button>
+            </div>
+        </div>
     </div>
 
     <div class="move-controls hidden" id="move-controls" aria-label="Move controls">

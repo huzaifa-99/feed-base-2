@@ -49,6 +49,19 @@ export function bindUi() {
         settingsPanel: document.getElementById("settings-panel"),
         howtoPanel: document.getElementById("howto-panel"),
         pauseOverlay: document.getElementById("pause-overlay"),
+        pauseHint: document.getElementById("pause-hint"),
+        pauseActions: document.getElementById("pause-actions"),
+        pauseConfirm: document.getElementById("pause-confirm"),
+        newGameBtn: document.getElementById("new-game-btn"),
+        newGameCancel: document.getElementById("new-game-cancel"),
+        newGameConfirm: document.getElementById("new-game-confirm"),
+        settingsActions: document.getElementById("settings-actions"),
+        settingsConfirm: document.getElementById("settings-confirm"),
+        settingsNewGameBtn: document.getElementById("settings-new-game-btn"),
+        settingsNewGameCancel: document.getElementById("settings-new-game-cancel"),
+        settingsNewGameConfirm: document.getElementById(
+            "settings-new-game-confirm"
+        ),
         feedbackToast: document.getElementById("feedback-toast"),
         soundOnIcon: soundBtn.querySelector(".icon-sound-on"),
         soundOffIcon: soundBtn.querySelector(".icon-sound-off"),
@@ -221,6 +234,35 @@ export class GameUi {
             String(!paused || helpOpen)
         );
         document.body.classList.toggle("is-paused", paused && !helpOpen);
+        if (!paused || helpOpen) this.hideNewGameConfirm();
+    }
+
+    showNewGameConfirm() {
+        this.els.pauseHint.textContent = "Reset score and streak?";
+        this.els.pauseActions.classList.add("hidden");
+        this.els.pauseConfirm.classList.remove("hidden");
+    }
+
+    hideNewGameConfirm() {
+        this.els.pauseHint.textContent = "Tap Play to resume";
+        this.els.pauseActions.classList.remove("hidden");
+        this.els.pauseConfirm.classList.add("hidden");
+        this.hideSettingsNewGameConfirm();
+    }
+
+    showSettingsNewGameConfirm() {
+        this.els.settingsActions.classList.add("hidden");
+        this.els.settingsConfirm.classList.remove("hidden");
+    }
+
+    hideSettingsNewGameConfirm() {
+        this.els.settingsActions.classList.remove("hidden");
+        this.els.settingsConfirm.classList.add("hidden");
+    }
+
+    syncSessionActions(hasStarted) {
+        this.els.helpClose.textContent = hasStarted ? "Continue" : "Play";
+        this.els.settingsNewGameBtn.classList.toggle("hidden", !hasStarted);
     }
 
     openHelp() {
@@ -235,11 +277,13 @@ export class GameUi {
     }
 
     showSettingsPanel() {
+        this.hideSettingsNewGameConfirm();
         this.els.settingsPanel.classList.remove("hidden");
         this.els.howtoPanel.classList.add("hidden");
     }
 
     showHowtoPanel() {
+        this.hideSettingsNewGameConfirm();
         this.els.settingsPanel.classList.add("hidden");
         this.els.howtoPanel.classList.remove("hidden");
     }

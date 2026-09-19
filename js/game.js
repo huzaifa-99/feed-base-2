@@ -54,6 +54,7 @@ export class Game {
         this.target = getRandomTarget();
         this.paused = true;
         this.helpOpen = true;
+        this.hasStarted = false;
         this.obstacles = [];
         this.maxObstacles = 0;
         this.particles = new ParticleSystem();
@@ -139,6 +140,7 @@ export class Game {
 
     start() {
         this.ui.syncSettingsForm(this.settingsPayload());
+        this.ui.syncSessionActions(false);
         this.applyPresentation();
         this.ui.setScore(this.score);
         this.ui.setHighScore(this.highScore, this.modeId, this.difficultyId);
@@ -185,6 +187,24 @@ export class Game {
             this.setPaused(false);
         });
         pauseBtn.addEventListener("click", () => this.setPaused(true));
+        this.ui.els.newGameBtn.addEventListener("click", () =>
+            this.ui.showNewGameConfirm()
+        );
+        this.ui.els.newGameCancel.addEventListener("click", () =>
+            this.ui.hideNewGameConfirm()
+        );
+        this.ui.els.newGameConfirm.addEventListener("click", () =>
+            this.startNewGame()
+        );
+        this.ui.els.settingsNewGameBtn.addEventListener("click", () =>
+            this.ui.showSettingsNewGameConfirm()
+        );
+        this.ui.els.settingsNewGameCancel.addEventListener("click", () =>
+            this.ui.hideSettingsNewGameConfirm()
+        );
+        this.ui.els.settingsNewGameConfirm.addEventListener("click", () =>
+            this.startNewGame()
+        );
         helpClose.addEventListener("click", () => this.closeHelp(true));
         helpOpen.addEventListener("click", () => this.openHelp());
         this.ui.els.howtoOpen.addEventListener("click", () => this.ui.showHowtoPanel());
@@ -327,6 +347,7 @@ export class Game {
         this.clearQuizTimer();
         this.setPaused(true);
         this.ui.syncSettingsForm(this.settingsPayload());
+        this.ui.syncSessionActions(this.hasStarted);
         this.ui.openHelp();
     }
 
@@ -370,6 +391,8 @@ export class Game {
             }
         }
 
+        this.hasStarted = true;
+        this.ui.syncSessionActions(true);
         this.setPaused(false);
     }
 
@@ -385,6 +408,15 @@ export class Game {
         this.applyPresentation();
         this.clearQuizTimer();
         if (this.isQuiz) this.nextQuizRound();
+    }
+
+    startNewGame() {
+        this.sound.ensure();
+        this.ui.hideNewGameConfirm();
+        if (this.helpOpen) this.closeHelp(true);
+        this.resetRun();
+        this.ui.showToast("Restarted", "correct");
+        this.setPaused(false);
     }
 
     toggleSound() {

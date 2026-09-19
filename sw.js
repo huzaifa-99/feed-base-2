@@ -26,7 +26,7 @@ const PRECACHE = [
     "./js/draw.js",
 ];
 
-const CACHE_NAME = "feed-base-2-v6";
+const CACHE_NAME = "feed-base-2-v7";
 
 self.addEventListener("install", (event) => {
     event.waitUntil(
