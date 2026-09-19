@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.childhoodjolly.feedbase2",
+      "sha256_cert_fingerprints": [
+        "E9:14:B8:91:A2:62:F1:1D:98:7E:0B:A6:B5:B0:51:DD:B8:79:12:FF:8B:82:05:DC:4C:81:A0:00:16:FB:CA:8F"
+      ]
+    }
+  }
+]

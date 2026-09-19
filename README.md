@@ -1,10 +1,10 @@
-# Feed Base-2
+# FeedBase2
 
 A small browser game for practicing **4-bit binary** (decimals **0–15**). Catch the right falling value, build streaks, and learn from misses.
 
 **Play:** [feedbase2.rhuzaifa.com](https://feedbase2.rhuzaifa.com/)
 
-![Feed Base-2 screenshot](https://github.com/huzaifa-99/feed-base-2/assets/68777211/43a65d5e-96a1-4a13-8c28-2c8950a4adf4)
+![FeedBase2 screenshot](https://github.com/huzaifa-99/feed-base-2/assets/68777211/43a65d5e-96a1-4a13-8c28-2c8950a4adf4)
 
 ## Modes
 

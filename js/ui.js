@@ -317,14 +317,14 @@ export class GameUi {
     async shareScore(score, highScore, modeId, difficultyId) {
         const mode = PLAY_MODES[modeId]?.label || modeId;
         const difficulty = DIFFICULTIES[difficultyId]?.label || difficultyId;
-        const text = `I scored ${score} on Feed Base-2 (${mode} · ${difficulty}, best ${highScore})!`;
+        const text = `I scored ${score} on FeedBase2 (${mode} · ${difficulty}, best ${highScore})!`;
         const url = window.location.href;
         const payload = `${text}\n${url}`;
 
         // Web Share works best as a single text blob on many mobile browsers
         if (navigator.share) {
             try {
-                const data = { title: "Feed Base-2", text: payload };
+                const data = { title: "FeedBase2", text: payload };
                 if (!navigator.canShare || navigator.canShare(data)) {
                     await navigator.share(data);
                     return;

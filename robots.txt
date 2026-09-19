@@ -1,4 +1,5 @@
 User-agent: *
 Allow: /
+Disallow: /.well-known/assetlinks.json
 
 Sitemap: https://feedbase2.rhuzaifa.com/sitemap.xml
